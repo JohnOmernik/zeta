@@ -56,7 +56,7 @@ done
 echo ""
 echo "------------------------------------------------------"
 echo ""
-echo "Putting Slaves to Work"
+echo "Putting Agents to Work"
 echo ""
 for SLAVE in $ZETA_MESOS_AGENTS
 do
