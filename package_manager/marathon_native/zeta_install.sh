@@ -1,7 +1,6 @@
 #!/bin/bash
 
 MESOS_ROLE="prod"
-UPPER_MESOS_ROLE=$(echo ${MESOS_ROLE}|tr '[a-z]' '[A-Z]')
 
 CLUSTERNAME=$(ls /mapr)
 
@@ -11,6 +10,13 @@ cd "$(dirname "$0")"
 . /mapr/$CLUSTERNAME/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
 
 INST_DIR="/mapr/$CLUSTERNAME/mesos/$MESOS_ROLE/marathon"
+
+if [ -d "$INST_DIR" ]; then
+    echo "The Installation Directory already exists at $INST_DIR"
+    echo "Installation will not continue over that, please rename or delete the existing directory to install fresh"
+    exit 1
+fi
+
 
 INST_VER="0.15.2"
 

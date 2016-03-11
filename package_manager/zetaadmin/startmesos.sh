@@ -49,9 +49,8 @@ do
     echo "ssh $MASTER \"$CMD\""
     echo ""
     if [ "$RUN" == "1" ]; then
-    echo "run"
-        #ssh $MASTER "$CMD"
-    fi 
+        ssh $MASTER "$CMD"
+    fi
     echo ""
 done
 
@@ -92,7 +91,7 @@ do
     echo $SSHCMD
     if [ "$RUN" == "1" ]; then
         ssh $AGENT "$SSHCMD"
-    fi 
+    fi
 
 
 done
