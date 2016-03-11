@@ -32,11 +32,11 @@ ZETA_ENV_FILE="/mapr/${CLUSTERNAME}/mesos/kstore/env/zeta_${CLUSTERNAME}_prod.sh
 
 ####################
 ####### Work to Clean up Default Volumes:
-
-sudo maprcli volume remove -name tables_vol 2> /dev/null
-sudo maprcli volume remove -name mapr.hbase 2> /dev/null
-sudo maprcli volume remove -name shared_data_vol 2> /dev/null
-sudo maprcli volume remove -name mapr.apps 2> /dev/null
+echo "Removing Default Volumes: Errors here about No such file or Directory are ok"
+sudo maprcli volume remove -name tables_vol
+sudo maprcli volume remove -name mapr.hbase
+sudo maprcli volume remove -name shared_data_vol
+sudo maprcli volume remove -name mapr.apps
 sudo rm -rf /mapr/$CLUSTERNAME/apps
 
 

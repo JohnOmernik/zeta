@@ -145,7 +145,7 @@ sudo mkdir -p /home/zetaadm/.ssh && sudo cp /mapr/$CLUSTERNAME/user/zetaadm/id_r
 
 
 ####################
-echo "Moving Scripts to /home/zetaadm""
+echo "Moving Scripts to /home/zetaadm"
 
 # Install Scripts
 sudo cp ./$ZETA_LAYOUT /home/zetaadm/
@@ -176,7 +176,7 @@ sudo cp ./runcmd.sh /home/zetaadm/
 sudo chown zetaadm:zetaadm /home/zetaadm/runcmd.sh
 
 
-echo "Base Install Complete (barring any errors reported above)"
+echo "Base Install Complete barring any errors reported above"
 echo "You are done using $IUSER. At this point Please su to zetaadm, and move the /home/zetaadm directory to start step 3"
 echo ""
 echo "$ sudo su"
