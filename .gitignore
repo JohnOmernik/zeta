@@ -1,0 +1,26 @@
+# Remove some data that will be specific to each Zeta Install
+
+# Specific working directories
+archive/
+zetafun/
+
+# Try to protect (mainly myself) but others from including credential info
+*.pem
+id_rsa
+id_rsa.pub
+**/*.pem
+**/id_rsa
+**/id_rsa.pub
+
+# cluster.conf will be ignore, we will include a cluster.conf.template that will not be ignored
+# Other files that may exist in my working that won't be included. 
+cluster.conf
+nodes.list
+Zeta-Cluster.template
+
+# There are packages that exist, to not clutter the git, these are all buildable.  Thus ignore tgz files.
+# There may be tgz in the actual packages (say zeta_packages/mypackage/foo.tgz) we don't ignore that
+# However as the readme will say here, let's try not to have tgzs there if at all possible. 
+/zeta_packages/zeta_packages/*.tgz
+/zeta_pacages/*.tgz
+*.tgz
