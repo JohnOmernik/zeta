@@ -2,6 +2,10 @@
 
 CLUSTERNAME=$(ls /mapr)
 
+MESOS_ROLE="prod"
+
+. /mapr/${CLUSTERNAME}/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
+
 INST_FILE="/mapr/$CLUSTERNAME/user/zetaadm/5_install_docker.sh"
 
 cat > $INST_FILE << EOL
@@ -24,6 +28,16 @@ sudo yum -y install docker-engine
 
 # Start Docker
 sudo service docker start
+
+sudo mkdir -p /etc/systemd/system/docker.service.d
+sudo tee /etc/systemd/system/docker.service.d/docker.conf <<- 'EOF1'
+[Service]
+ExecStart=
+ExecStart=/usr/bin/docker daemon -H fd:// --insecure-registry=$ZETA_DOCKER_REG_URL
+EOF1
+sudo systemctl daemon-reload
+sudo service docker restart
+
 EOL
 
 chmod +x $INST_FILE
