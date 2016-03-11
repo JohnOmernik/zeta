@@ -1,7 +1,6 @@
 #!/bin/bash
 
 
-
 SSH="ssh -o StrictHostKeyChecking=no -n"
 
 HOST=$1

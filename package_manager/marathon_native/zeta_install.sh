@@ -44,15 +44,17 @@ stty echo
 
 mkdir -p /mapr/$CLUSTERNAME/mesos/kstore/${MESOS_ROLE}/marathon
 
-cat > /mapr/$CLUSTERNAME/mesos/kstore/${MESOS_ROLE}/marathon/marathon${MESOS_ROLE}.sh << EOL
+cat > /mapr/$CLUSTERNAME/mesos/kstore/${MESOS_ROLE}/marathon/marathon.sh << EOL
 #!/bin/bash
-MARATHON${UPPER_MESOS_ROLE}_USER="$USER"
-MARATHON${UPPER_MESOS_ROLE}_PASS="$PASS"
+MARATHON_USER="$USER"
+MARATHON_PASS="$PASS"
 EOL
 
-cat > /mapr/$CLUSTERNAME/mesos/kstore/${MESOS_ROLE}/marathon/marathon${MESOS_ROLE}.txt << EOL1
+cat > /mapr/$CLUSTERNAME/mesos/kstore/${MESOS_ROLE}/marathon/marathon.txt << EOL1
 $USER:$PASS
 EOL1
 
 echo -n $PASS1 > /mapr/$CLUSTERNAME/mesos/kstore/${MESOS_ROLE}/marathon/mesossecret.txt
 
+
+echo "Marathon_native installed. Start via ~/zetaadmin/startmarathon.sh"

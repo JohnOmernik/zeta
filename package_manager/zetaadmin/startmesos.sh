@@ -1,10 +1,11 @@
 #!/bin/bash
 
+RUN=$1
+MESOS_ROLE="prod"
 CLUSTERNAME=$(ls /mapr)
-. /mapr/${CLUSTERNAME}/mesos/kstore/env/zeta_${CLUSTERNAME}_prod.sh
+. /mapr/${CLUSTERNAME}/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
 
-
-DEVSLAVES="None"
+DEVAGENTS="None"
 DEVPERC="20"
 
 MASTERPORT="$ZETA_MESOS_LEADER_PORT"
@@ -14,23 +15,22 @@ ZKSTR="zk://$ZETA_MESOS_ZK"
 
 MASTER_OPS="--cluster=$CLUSTERNAME --roles=prod,dev --quorum=2 --authenticate --authenticate_slaves --credentials=/mapr/$CLUSTERNAME/mesos/kstore/mesosconf/secrets/allcredentials.json --acls=/mapr/$CLUSTERNAME/mesos/kstore/mesosconf/mesos_acls.json"
 
-SLAVE_OPS="--gc_delay=600mins --disk_watch_interval=60secs --executor_registration_timeout=3mins --credential=/mapr/$CLUSTERNAME/mesos/kstore/agents/credential.json"
+AGENT_OPS="--gc_delay=600mins --disk_watch_interval=60secs --executor_registration_timeout=3mins --credential=/mapr/$CLUSTERNAME/mesos/kstore/agents/credential.json"
 
-EXE_RUN="mesos-daemon.sh"
+EXE_RUN="sudo /usr/sbin/mesos-daemon.sh"
 
 CONTAINERIZERS="docker,mesos"
 
 ISOLATION="cgroups/cpu,cgroups/mem"
+
 MASTER_WORK="/opt/mapr/mesos/tmp/master/"
 MASTER_LOG="/opt/mapr/mesos/tmp/master_log/"
 
 
-SLAVE_WORK="/opt/mapr/mesos/tmp/slave"
-SLAVE_LOG="/opt/mapr/mesos/tmp/slave_log/"
+AGENT_WORK="/opt/mapr/mesos/tmp/slave"
+AGENT_LOG="/opt/mapr/mesos/tmp/slave_log/"
 
 echo "Starting Masters:"
-
-
 
 IPCOMMAND1="/sbin/ifconfig eth0|grep -o -P \"inet (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\"|cut -d\" \" -f2"
 IPCOMMAND2="/sbin/ifconfig eth1|grep -o -P \"inet (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\"|cut -d\" \" -f2"
@@ -48,8 +48,10 @@ do
 
     echo "ssh $MASTER \"$CMD\""
     echo ""
-#    ssh $MASTER "$CMD" 2> /dev/null
-#    echo "$CMD"
+    if [ "$RUN" == "1" ]; then
+    echo "run"
+        #ssh $MASTER "$CMD"
+    fi 
     echo ""
 done
 
@@ -58,24 +60,24 @@ echo "------------------------------------------------------"
 echo ""
 echo "Putting Agents to Work"
 echo ""
-for SLAVE in $ZETA_MESOS_AGENTS
+for AGENT in $ZETA_MESOS_AGENTS
 do
 
-    IP=`ssh $SLAVE "$IPCOMMAND1" 2>/dev/null`
+    IP=`ssh $AGENT "$IPCOMMAND1" 2>/dev/null`
 
     if [ "$IP" == "" ]; then
-        IP=`ssh $SLAVE "$IPCOMMAND2" 2>/dev/null`
+        IP=`ssh $AGENT "$IPCOMMAND2" 2>/dev/null`
     fi
 
-    echo "$SLAVE on $IP"
+    echo "$AGENT on $IP"
 
-    if [[ $DEVSLAVES == *"$SLAVE"* ]]
+    if [[ $DEVAGENTS == *"$AGENT"* ]]
     then
-        echo "Dev Slave running at $DEVPERC percent of total resources"
-        ALLRESOURCES=$(./createmesos.sh $SLAVE $DEVPERC 2>/dev/null)
+        echo "Dev Agent running at $DEVPERC percent of total resources"
+        ALLRESOURCES=$(./createmesos.sh $AGENT $DEVPERC 2>/dev/null)
     else
         echo "Prod Only Slave"
-        ALLRESOURCES=$(./createmesos.sh $SLAVE 2>/dev/null)
+        ALLRESOURCES=$(./createmesos.sh $AGENT 2>/dev/null)
     fi
 
 
@@ -83,13 +85,15 @@ do
 
     echo "Res: $ALLRESOURCES"
     echo ""
-    CMD="hostname;$EXE_RUN mesos-slave --master=$ZKSTR --ip=$IP $SLAVE_WORK --log_dir=$SLAVE_LOG --containerizers=$CONTAINERIZERS --isolation=$ISOLATION $SLAVE_OPS --work_dir=$SLAVE_WORK --resources=\\\"$ALLRESOURCES\\\""
-    echo "ssh $SLAVE \"$CMD\""
+    CMD="hostname;$EXE_RUN mesos-slave --master=$ZKSTR --ip=$IP --log_dir=$AGENT_LOG --containerizers=$CONTAINERIZERS --isolation=$ISOLATION $AGENT_OPS --work_dir=$AGENT_WORK --resources=\\\"$ALLRESOURCES\\\""
+    SSHCMD="hostname;$EXE_RUN mesos-slave --master=$ZKSTR --ip=$IP --log_dir=$AGENT_LOG --containerizers=$CONTAINERIZERS --isolation=$ISOLATION $AGENT_OPS --work_dir=$AGENT_WORK --resources=\"$ALLRESOURCES\""
+    echo "ssh $AGENT \"$CMD\""
     echo ""
-#   ssh $SLAVE "$CMD" 
- #   ssh $SLAVE "$CMD" 2> /dev/null
-#    echo "$CMD"
-
+    echo $SSHCMD
+    if [ "$RUN" == "1" ]; then
+        ssh $AGENT "$SSHCMD"
+    fi 
 
 
 done
+

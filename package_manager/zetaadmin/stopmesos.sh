@@ -1,7 +1,8 @@
 #!/bin/bash
 
+MESOS_ROLE="prod"
 CLUSTERNAME=$(ls /mapr)
-. /mapr/${CLUSTERNAME}/mesos/kstore/env/zeta_${CLUSTERNAME}_prod.sh
+. /mapr/${CLUSTERNAME}/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
 
 
 echo "Stopping Agents"
@@ -9,7 +10,7 @@ echo "Stopping Agents"
 for AGENT in $ZETA_MESOS_AGENTS
 do
    echo "Killing Mesos Agent on $AGENT"
-   ssh $SLAVE "hostname; sudo killall mesos-slave" 2>/dev/null
+   ssh $AGENT "hostname; sudo killall mesos-slave" 2>/dev/null
 done
 sleep 2
 

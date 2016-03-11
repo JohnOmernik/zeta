@@ -3,7 +3,7 @@ CLUSTERNAME=$(ls /mapr)
 MARATHON_INSTANCE="prod"
 
 . /mapr/${CLUSTERNAME}/mesos/kstore/env/zeta_${CLUSTERNAME}_${MARATHON_INSTANCE}.sh
-. /mapr/${CLUSTERNAME}/mesos/kstore/${MARATHON_INSTANCE}/marathon/marathon${MARATHON_INSTANCE}.sh
+. /mapr/${CLUSTERNAME}/mesos/kstore/${MARATHON_INSTANCE}/marathon/marathon.sh
 
 # This is for prod.
 
@@ -18,4 +18,4 @@ if [ "$MARJSON" == "" ]; then
    exit 0
 fi
 
-curl -X POST -u "$MARATHONPROD_USER:$MARATHONPROD_PASS" -H "Content-Type: application/json" $MARATHON_URL -d@$MARJSON
+curl -X POST -u "$MARATHON_USER:$MARATHON_PASS" -H "Content-Type: application/json" $MARATHON_URL -d@$MARJSON

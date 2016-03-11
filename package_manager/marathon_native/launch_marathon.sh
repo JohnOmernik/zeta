@@ -11,7 +11,7 @@ MARATHON_VER="marathon-0.15.2"
 MESOSSECRET="/mapr/$CLUSTERNAME/mesos/kstore/${MESOS_ROLE}/marathon/mesossecret.txt"
 
 # Include Credential File
-. /mapr/$CLUSTERNAME/mesos/kstore/prod/marathon/marathon${MESOS_ROLE}.sh
+. /mapr/$CLUSTERNAME/mesos/kstore/${MESOS_ROLE}/marathon/marathon.sh
 
 
 
@@ -34,7 +34,7 @@ export MARATHON_LOCAL_PORT_MAX="19999" # The default is 20000, but we move it do
 export MARATHON_MASTER="${ZKSTR}/mesosha"
 export MARATHON_FRAMEWORK_NAME="marathon${MESOS_ROLE}"
 export MARATHON_ZK="${ZKSTR}/${MARATHON_FRAMEWORK_NAME}"
-export MESOSPHERE_HTTP_CREDENTIALS="$MARATHONPROD_USER:$MARATHONPROD_PASS"
+export MESOSPHERE_HTTP_CREDENTIALS="$MARATHON_USER:$MARATHON_PASS"
 
 export MARATHON_MESOS_AUTHENTICATION_PRINCIPAL="zeta${MESOS_ROLE}control"
 export MARATHON_MESOS_AUTHENTICATION_SECRET_FILE="$MESOSSECRET"

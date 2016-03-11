@@ -11,6 +11,6 @@ for MASTER in $ZETA_MARATHON_MASTERS
 do
    CMD="ssh $MASTER $STARTSCRIPT"
    echo $CMD
-#   $CMD
+   $CMD
 done
 

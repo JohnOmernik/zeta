@@ -1,7 +1,8 @@
 #!/bin/bash
 
+MESOS_ROLE="prod"
 CLUSTERNAME=$(ls /mapr)
-. /mapr/$CLUSTERNAME/mesos/kstore/env/zeta_${CLUSTERNAME}_prod.sh
+. /mapr/$CLUSTERNAME/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
 cd "$(dirname "$0")"
 
 # This is a basic script to add users to a basic Zeta Setup.  This should have better automation in the future. 
