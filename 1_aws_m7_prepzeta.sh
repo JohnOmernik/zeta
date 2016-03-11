@@ -14,9 +14,13 @@ cd "$(dirname "$0")"
 # Upload zeta_packages.tgz to the cluster
 # Provide instructions on the next step
 
+
+##########################
+# Build Packages
+echo "Running the Packager to ensure we have the latest packages"
 cd package_manager
 ./package_tgzs.sh
-
+cd ..
 
 ##########################
 SSHHOST="${IUSER}@${IHOST}"
@@ -24,6 +28,7 @@ SSHHOST="${IUSER}@${IHOST}"
 # Since we use these a lot I short cut them into variables
 SCPCMD="scp -i ${PRVKEY}"
 SSHCMD="ssh -i ${PRVKEY} -t ${SSHHOST}"
+
 #########################
 # Get a list of IP addresses of local nodes
 NODES=$($SSHCMD -o StrictHostKeyChecking=no "sudo maprcli node list -columns ip")
@@ -38,19 +43,20 @@ do
 done
 cat nodes.list
 #####################
-
+# Copy private key
 $SCPCMD ${PRVKEY} ${SSHHOST}:/home/${IUSER}/.ssh/id_rsa
-
+# Copy next step scripts and helpers
 $SCPCMD runcmd.sh ${SSHHOST}:/home/${IUSER}/
 $SCPCMD nodes.list ${SSHHOST}:/home/${IUSER}/
 $SCPCMD cluster.conf ${SSHHOST}:/home/${IUSER}/
-
-$SCPCMD 2_zeta_base.sh ${SSHHOST}:/home/${IUSER}/
-$SCPCMD 3_zeta_layout.sh ${SSHHOST}:/home/${IUSER}/
-$SCPCMD 4_zeta_install_docker.sh ${SSHHOST}:/home/${IUSER}/
-$SCPCMD 5_zeta_install_mesos_dep.sh ${SSHHOST}:/home/${IUSER}/
-$SCPCMD 6_zeta_install_mesos.sh ${SSHHOST}:/home/${IUSER}/
 $SCPCMD zeta_packages.tgz ${SSHHOST}:/home/${IUSER}/
+$SCPCMD 2_zeta_base.sh ${SSHHOST}:/home/${IUSER}/
+# Copy other defined scripts
+$SCPCMD $ZETA_LAYOUT ${SSHHOST}:/home/${IUSER}/
+$SCPCMD $ZETA_PACKAGER ${SSHHOST}:/home/${IUSER}/
+$SCPCMD $ZETA_DOCKER ${SSHHOST}:/home/${IUSER}/
+$SCPCMD $ZETA_PREP_MESOS ${SSHHOST}:/home/${IUSER}/
+$SCPCMD $ZETA_INSTALL_MESOS ${SSHHOST}:/home/${IUSER}/
 
 $SSHCMD "chmod +x runcmd.sh"
 $SSHCMD "chmod +x 2_zeta_base.sh"
