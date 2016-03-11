@@ -8,11 +8,12 @@
 # 2. Remove All non FS/Admin Roles in MapR (No Yarn, no Drill, no Hive etc)
 # 3. Refresh Roles using configure.sh
 # 4. Update the warden.conf on each node to reflect sane resource usage to play nice with Mesos
-# 5. Restart warden on all nodes
-# 6. Get password for zetaadm user
-# 7. Create zetaadm user on all nodes
-# 8. Create keyless ssh key for zetaadm and distribute the public key
-# 9. Check ZETA variable for next script. If Defined, move it to /home/zetaadm, clean up permissions and run. 
+# 5. Update the env.sh to handle docker SUBNETS
+# 6. Restart warden on all nodes
+# 7. Get password for zetaadm user
+# 8. Create zetaadm user on all nodes
+# 9. Create keyless ssh key for zetaadm and distribute the public key
+#10. Check ZETA variable for next script. If Defined, move it to /home/zetaadm, clean up permissions and run. 
 
 
 
@@ -53,6 +54,37 @@ echo "Updating Warden settings to handle Mesos "
 ./runcmd.sh "sudo cp /opt/mapr/conf/warden.conf.bak /opt/mapr/conf/warden.conf"
 
 
+###################
+# Set the MAPR_SUBNETS VARIABLE
+echo "Updaing env.sh to use correct subnets"
+O1=$(head -1 nodes.list|cut -d"." -f1)
+O2=$(head -1 nodes.list|cut -d"." -f2)
+O3=$(head -1 nodes.list|cut -d"." -f3)
+
+NET="$O1.$O2.$O3.0\/24"
+
+# Back up env.sh
+./runcmd.sh "sudo cp /opt/mapr/conf/env.sh /opt/mapr/conf/env.sh.bak"
+
+# Replace the line in the env.sh
+./runcmd.sh "sudo sed -i 's/#export MAPR_SUBNETS=/export MAPR_SUBNETS=$NET/' /opt/mapr/conf/env.sh.bak"
+
+#copy the env.sh.bak to the env.sh
+./runcmd.sh "sudo cp /opt/mapr/conf/env.sh.bak /opt/mapr/conf/env.sh"
+
+
+
+
+
+
+####################
+echo "Checking and Creating ec2-user MapR Home Volume if needed"
+if [ ! -d "/mapr/$CLUSTERNAME/user/ec2-user" ]; then
+    sudo maprcli volume create -name ec2-user_home -path /user/ec2-user -rootdirperms 775 -user ec2-user:fc,a,dump,restore,m,d
+    sudo chown ec2-user /mapr/$CLUSTERNAME/user/ec2-user
+    sudo chmod 755 /mapr/$CLUSTERNAME/user/ec2-user
+    sleep 2
+fi
 ####################
 #Run through Nodes slowly to restart warden
 echo "Restarting Warden on all nodes"
@@ -99,7 +131,7 @@ chmod +x $SCRIPT
 ./runcmd.sh "sudo $SCRIPT"
 rm $SCRIPT
 ####################
-echo "Making MapR Home Volume"
+echo "Making Zetaadm Home Volume"
 sudo maprcli volume create -name zetaadm_home -path /user/zetaadm -rootdirperms 775 -user zetaadm:fc,a,dump,restore,m,d
 sudo chown zetaadm /mapr/$CLUSTERNAME/user/zetaadm
 sudo chmod 755 /mapr/$CLUSTERNAME/user/zetaadm
@@ -118,11 +150,24 @@ sudo mkdir -p /home/zetaadm/.ssh && sudo cp /mapr/$CLUSTERNAME/user/zetaadm/id_r
 echo "Checking to see if ZETA Script is defined, if so run it as zetaaadm"
 if [ "$ZETA" != "" ]; then
     sudo cp ./$ZETA /home/zetaadm/
+    sudo cp ./$ZETA_DOCKER /home/zetaadm/
+    sudo cp ./$ZETA_PREP_MESOS /home/zetaadm/
+    sudo cp ./$ZETA_INSTALL_MESOS /home/zetaadm/
+    sudo cp ./zetaadmin.tgz /home/zetaadm/
     sudo cp ./runcmd.sh /home/zetaadm/
     sudo cp ./nodes.list /home/zetaadm/
     sudo cp ./cluster.conf /home/zetaadm
+    sudo cp ./cluster.conf /mapr/$CLUSTERNAME/user/zetaadm/
+    sudo chown zetaadm:zetaadm /home/zetaadm/cluster.conf
+    sudo chown zetaadm:zetaadm /home/zetaadm/zetaadmin.tgz
+    sudo chown zetaadm:zetaadm /home/zetaadm/$ZETA_DOCKER
+    sudo chown zetaadm:zetaadm /home/zetaadm/$ZETA_PREP_MESOS
+    sudo chown zetaadm:zetaadm /home/zetaadm/$ZETA_INSTALL_MESOS
     sudo chown zetaadm:zetaadm /home/zetaadm/runcmd.sh
     sudo chown zetaadm:zetaadm /home/zetaadm/nodes.list
     sudo chown zetaadm:zetaadm /home/zetaadm/$ZETA
+    sudo chown zetaadm:zetaadm /mapr/$CLUSTERNAME/user/zetaadm/cluster.conf
     sudo su -c /home/zetaadm/$ZETA zetaadm
 fi
+
+

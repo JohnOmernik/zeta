@@ -1,5 +1,16 @@
 #!/bin/bash
 
+
+# RUN THIS SCRIPT AS zetaadm
+if [[ $EUID -ne 2500 ]]; then
+   echo "This script must be run as zetaadm" 1>&2
+   exit 1
+fi
+
+
+# Change to the root dir
+cd "$(dirname "$0")"
+
 . ./cluster.conf
 
 ####################
@@ -11,15 +22,6 @@
 # 6. Setup major directories (apps, data, etl, mesos) in MapR FS Set permissions etc.
 # 7. Setup kstore directories and basic configuration for Mesos
 
-
-# RUN THIS SCRIPT AS zetaadm
-if [[ $EUID -ne 2500 ]]; then
-   echo "This script must be run as zetaadm" 1>&2
-   exit 1
-fi
-
-# Change to the root dir
-cd "$(dirname "$0")"
 
 # Get the Zookeepers from the warden.conf file
 ZK_SPEC=$(cat /opt/mapr/conf/warden.conf|grep zookeeper\.servers|sed "s/zookeeper\.servers=//g")
@@ -34,6 +36,7 @@ ZETA_ENV_FILE="/mapr/${CLUSTERNAME}/mesos/kstore/env/zeta_${CLUSTERNAME}_prod.sh
 sudo maprcli volume remove -name tables_vol
 sudo maprcli volume remove -name mapr.hbase
 sudo maprcli volume remove -name shared_data_vol
+sudo maprcli volume remove -name mapr.apps
 sudo rm -rf /mapr/$CLUSTERNAME/apps
 
 
@@ -77,7 +80,7 @@ echo "Adding mapr and zetaadm to all zeta groups on all nodes"
 # The apps directory contains non-cluster services. Think specific apps for your org. A webserver, a dashboard. These may be developed outside, but are serving a business purpose, not a cluster based (admin, frameworks etc) purpose. 
 # Webservrs, scrapers, etc
 
-echo "Creating apps Directory, and prod/dev roles"
+echo "Creating apps directory, and prod/dev roles within"
 sudo mkdir -p /mapr/$CLUSTERNAME/apps
 sudo chown zetaadm:zetausers /mapr/$CLUSTERNAME/apps
 sudo chmod 750 /mapr/$CLUSTERNAME/apps
@@ -105,7 +108,7 @@ sudo chown zetaadm:$GRP /mapr/${CLUSTERNAME}$MNT
 # The Mesos directory in Zeta is used to house cluster services. These are services that may serve many purposes in your cluster, and also serve many users and applications.
 # Examples include, Apache Drill, Docker Registery, Apache Kafka, Apache Spark, UIs for these services, etc. 
 
-echo "Creating mesos direcotry and prod/dev roles within"
+echo "Creating mesos directory and prod/dev roles within"
 sudo mkdir -p /mapr/$CLUSTERNAME/mesos
 sudo chown zetaadm:zetausers /mapr/$CLUSTERNAME/mesos
 sudo chmod 750 /mapr/$CLUSTERNAME/mesos
@@ -247,7 +250,7 @@ cat > /mapr/$CLUSTERNAME/mesos/kstore/mesosconf/secrets/allcredentials.json << E
   ]
 }
 EOL0
-
+sudo chmod 750 /mapr/$CLUSTERNAME/mesos/kstore/mesosconf/secrets/allcredentials.json
 
 cat > /mapr/$CLUSTERNAME/mesos/kstore/mesosconf/mesos_acls.json << EOL1
 {
@@ -276,6 +279,12 @@ EOL2
 # if your users develop to the existence of this script, and thus source it in their work, if cluster information changes (say zookeeper information) their applications authmatically adjust
 # This is the stub version of this, more information can be added as needed
 
+# GET ALL NODES
+ALL_NODES=$(sudo maprcli node list -columns ip|cut -d" " -f1|grep -v "hostname")
+
+# Get 3 Master Nodes for Mesos Master and Marathon Master  
+MASTER_NODES=$(echo ${ALL_NODES}|cut -d" " -f1,2,3)
+
 DIR="/mapr/$CLUSTERNAME/mesos/kstore/env"
 sudo mkdir -p $DIR
 sudo chown zetaadm:zetaadm $DIR
@@ -285,7 +294,7 @@ echo "Building Zeta ENV File"
 cat > $ZETA_ENV_FILE << EOL3
 #!/bin/bash
 
-#ENV Variables for Zeta Environment
+# START GLOBAL ENV Variables for Zeta Environment
 export ZETA_ZK="${ZK_SPEC}"
 export ZETA_MESOS_ZK="\$ZETA_ZK/mesosha"
 
@@ -296,9 +305,17 @@ export ZETA_MESOS_DOMAIN="${MESOS_DOMAIN}"
 export ZETA_MESOS_LEADER="leader.\${ZETA_MESOS_DOMAIN}"
 export ZETA_MESOS_LEADER_PORT="5050"
 
+export ZETA_NODES="${ALL_NODES}"
+export ZETA_MESOS_AGENTS="${ALL_NODES}"
+export ZETA_MESOS_MASTERS="${MASTER_NODES}"
+# END GLOBAL ENV VARIABLES
+
+export ZETA_MARATHON_MASTERS="${MASTER_NODES}"
 export ZETA_MARATHON_ENV="marathonprod"
 export ZETA_MARATHON_HOST="\${ZETA_MARATHON_ENV}.\${ZETA_MESOS_DOMAIN}"
 export ZETA_MARATHON_PORT="20080"
+
+export ZETA_DOCKER_REG="dockerregv2.\${ZETA_MARATHON_ENV}.\${ZETA_MESOS_DOMAIN}:5000"
 
 export ZETA_CHRONOS_ENV="chronosprod"
 export ZETA_CHRONOS_HOST="\${ZETA_CHRONOS_ENV}.\${ZETA_MARATHON_ENV}.\${ZETA_MESOS_DOMAIN}"
@@ -312,6 +329,9 @@ export ZETA_DRILL_WEB_HOST="\${ZETA_DRILL_ENV}.\${ZETA_MARATHON_ENV}.\${ZETA_MES
 export ZETA_DRILL_WEB_PORT="20000"
 export ZETA_DRILL_USER_PORT="20001"
 export ZETA_DRILL_BIT_PORT="20002"
+
+
+
 
 if [ "\$1" == "1" ]; then
     env|grep -P "^ZETA_"
@@ -329,6 +349,14 @@ sudo mkdir -p $DIR
 sudo chown mapr:zetaadm $DIR
 sudo chmod 775 $DIR
 
+
+#########
+# A Location to store cluster builds of Mesos
+DIR="/mapr/$CLUSTERNAME/mesos/builds"
+sudo mkdir -p $DIR
+sudo chown zetaadm:zetaadm $DIR
+sudo chmod 775 $DIR
+
 #########
 # The agents directory has the credentials for agents to authenticate to mesos. 
 DIR="/mapr/$CLUSTERNAME/mesos/kstore/agents"
@@ -342,3 +370,6 @@ cat > /mapr/$CLUSTERNAME/mesos/kstore/agents/credential.json << EOL4
   "secret": "${MESOS_AGENT_PASS}"
 }
 EOL4
+
+
+tar zxf zetaadmin.tgz

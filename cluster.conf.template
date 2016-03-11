@@ -8,7 +8,7 @@
 #########################
 # Need one external host to connect to upload scripts etc.
 # This should be the IP address of the node to do the install from. In AWS, just pick a node and send it along
-IHOST="52.91.149.144"
+IHOST="127.0.0.1"
 
 #########################
 # IUSER is the initial user to work with. in EC2, this is the AMI user. With the PRVKEY settings, this user should be able to SSH to all hosts in the cluster
@@ -17,7 +17,7 @@ IUSER="ec2-user"
 #########################
 # PRVKEY is the the key for ssh to all nodes
 # This is copied to the install host as /home/$IUSER/.ssh/id_rsa
-PRVKEY="./maprmesos.pem"
+PRVKEY="./yourkey.pem"
 
 #########################
 # CLUSTERNAME is the MapR Clustername.

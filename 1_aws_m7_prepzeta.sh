@@ -11,7 +11,7 @@ SCPCMD="scp -i ${PRVKEY}"
 SSHCMD="ssh -i ${PRVKEY} -t ${SSHHOST}"
 #########################
 # Get a list of IP addresses of local nodes
-NODES=$($SSHCMD -o StrictHostKeyChecking=no "maprcli node list -columns ip")
+NODES=$($SSHCMD -o StrictHostKeyChecking=no "sudo maprcli node list -columns ip")
 rm -f nodes.list
 touch nodes.list
 for n in $NODES
@@ -30,11 +30,14 @@ $SCPCMD runcmd.sh ${SSHHOST}:/home/${IUSER}/
 $SCPCMD nodes.list ${SSHHOST}:/home/${IUSER}/
 $SCPCMD 2_zeta_base.sh ${SSHHOST}:/home/${IUSER}/
 $SCPCMD 3_zeta_layout.sh ${SSHHOST}:/home/${IUSER}/
+$SCPCMD 4_zeta_install_docker.sh ${SSHHOST}:/home/${IUSER}/
+$SCPCMD 5_zeta_install_mesos_dep.sh ${SSHHOST}:/home/${IUSER}/
+$SCPCMD 6_zeta_install_mesos.sh ${SSHHOST}:/home/${IUSER}/
+$SCPCMD zetaadmin.tgz ${SSHHOST}:/home/${IUSER}/
 $SCPCMD cluster.conf ${SSHHOST}:/home/${IUSER}/
 
 $SSHCMD "chmod +x runcmd.sh"
 $SSHCMD "chmod +x 2_zeta_base.sh"
-$SSHCMD "chmod +x 3_zeta_layout.sh"
 
 echo "Cluster Scripts have been prepped."
 echo "Log into cluster node and execute initial script"
@@ -44,3 +47,4 @@ echo "> ssh -i ${PRVKEY} $SSHHOST"
 echo ""
 echo "Initiate next step:"
 echo "> ./2_zeta_base.sh"
+
