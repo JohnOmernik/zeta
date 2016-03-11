@@ -6,8 +6,8 @@ cd "$(dirname "$0")"
 . ./cluster.conf
 
 ##########################
-# Run the Package Manager for a clean copy of packages
 # Get a node list from the connecting node, save it to nodes.list
+# Run the Package Manager for a clean copy of packages
 # Upload the private key to the node
 # Upload the runcmd.sh, nodes.list, and cluster.conf files to the cluster
 # Upload the numbered scripts to the cluster
@@ -15,12 +15,6 @@ cd "$(dirname "$0")"
 # Provide instructions on the next step
 
 
-##########################
-# Build Packages
-echo "Running the Packager to ensure we have the latest packages"
-cd package_manager
-./package_tgzs.sh
-cd ..
 
 ##########################
 SSHHOST="${IUSER}@${IHOST}"
@@ -32,16 +26,40 @@ SSHCMD="ssh -i ${PRVKEY} -t ${SSHHOST}"
 #########################
 # Get a list of IP addresses of local nodes
 NODES=$($SSHCMD -o StrictHostKeyChecking=no "sudo maprcli node list -columns ip")
+
+if [ "$NODES" == "" ]; then
+    echo "Did not get list of nodes from remote cluster"
+    echo "Result of NODES: $NODES"
+    echo "Cannot proceed without NODES"
+    exit 1
+fi
 rm -f nodes.list
 touch nodes.list
 for n in $NODES
 do
-    g=$(echo $n|grep -E "\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}")
+    g=$(echo $n|grep -E "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}")
     if [ "$g" != "" ]; then
-        echo $g >> nodes.list
+        echo $g >> ./nodes.list
     fi
 done
 cat nodes.list
+
+NODE_CNT=$(cat ./nodes.list|wc -l)
+if [ ! "$NODE_CNT" -gt 2 ]; then
+   echo "Node Count is not greater than 3"
+   echo "Node Count: $NODE_CNT"
+    exit 1
+fi
+
+
+##########################
+# Build Packages
+echo "Running the Packager to ensure we have the latest packages"
+cd package_manager
+./package_tgzs.sh
+cd ..
+
+
 #####################
 # Copy private key
 $SCPCMD ${PRVKEY} ${SSHHOST}:/home/${IUSER}/.ssh/id_rsa
