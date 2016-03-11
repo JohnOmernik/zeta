@@ -13,6 +13,8 @@ wget ${MESOS_RPM_ROOT}${MESOS_RPM}
 
 sudo rpm -i ${MESOS_RPM}
 
+rm ${MESOS_RPM}
+
 EOL
 
 chmod +x $INST_FILE

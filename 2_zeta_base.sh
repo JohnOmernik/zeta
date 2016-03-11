@@ -150,14 +150,19 @@ echo "Moving Scripts to /home/zetaadm"
 # Install Scripts
 sudo cp ./$ZETA_LAYOUT /home/zetaadm/
 sudo chown zetaadm:zetaadm /home/zetaadm/$ZETA_LAYOUT
+sudo chmod +x /home/zetaadm/$ZETA_LAYOUT
 sudo cp ./$ZETA_PACKAGER /home/zetaadm/
 sudo chown zetaadm:zetaadm /home/zetaadm/$ZETA_PACKAGER
+sudo chmod +x /home/zetaadm/$ZETA_PACKAGER
 sudo cp ./$ZETA_DOCKER /home/zetaadm/
 sudo chown zetaadm:zetaadm /home/zetaadm/$ZETA_DOCKER
+sudo chmod +x /home/zetaadm/$ZETA_DOCKER
 sudo cp ./$ZETA_PREP_MESOS /home/zetaadm/
 sudo chown zetaadm:zetaadm /home/zetaadm/$ZETA_PREP_MESOS
+sudo chmod +x /home/zetaadm/$ZETA_PREP_MESOS
 sudo cp ./$ZETA_INSTALL_MESOS /home/zetaadm/
 sudo chown zetaadm:zetaadm /home/zetaadm/$ZETA_INSTALL_MESOS
+sudo chmod +x /home/zetaadm/$ZETA_INSTALL_MESOS
 
 # Settings and Node List
 sudo cp ./cluster.conf /home/zetaadm
@@ -174,7 +179,7 @@ sudo chown zetaadm:zetaadm /home/zetaadm/zeta_packages.tgz
 # Zeta runcmd helper
 sudo cp ./runcmd.sh /home/zetaadm/
 sudo chown zetaadm:zetaadm /home/zetaadm/runcmd.sh
-
+sudo chmod +x /home/zetaadm/runcmd.sh
 
 echo "Base Install Complete barring any errors reported above"
 echo "You are done using $IUSER. At this point Please su to zetaadm, and move the /home/zetaadm directory to start step 3"
