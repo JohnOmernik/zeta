@@ -144,30 +144,44 @@ sudo mkdir -p /home/zetaadm/.ssh && sudo cp /mapr/$CLUSTERNAME/user/zetaadm/id_r
 ./runcmd.sh "sudo mkdir -p /home/zetaadm/.ssh && sudo cp /mapr/$CLUSTERNAME/user/zetaadm/id_rsa.pub /home/zetaadm/.ssh/authorized_keys && sudo chown -R zetaadm:zetaadm /home/zetaadm/.ssh && sudo chmod 700 /home/zetaadm/.ssh && sudo chmod 600 /home/zetaadm/.ssh/authorized_keys"
 
 
-
-
 ####################
-echo "Checking to see if ZETA Script is defined, if so run it as zetaaadm"
-if [ "$ZETA" != "" ]; then
-    sudo cp ./$ZETA /home/zetaadm/
-    sudo cp ./$ZETA_DOCKER /home/zetaadm/
-    sudo cp ./$ZETA_PREP_MESOS /home/zetaadm/
-    sudo cp ./$ZETA_INSTALL_MESOS /home/zetaadm/
-    sudo cp ./zetaadmin.tgz /home/zetaadm/
-    sudo cp ./runcmd.sh /home/zetaadm/
-    sudo cp ./nodes.list /home/zetaadm/
-    sudo cp ./cluster.conf /home/zetaadm
-    sudo cp ./cluster.conf /mapr/$CLUSTERNAME/user/zetaadm/
-    sudo chown zetaadm:zetaadm /home/zetaadm/cluster.conf
-    sudo chown zetaadm:zetaadm /home/zetaadm/zetaadmin.tgz
-    sudo chown zetaadm:zetaadm /home/zetaadm/$ZETA_DOCKER
-    sudo chown zetaadm:zetaadm /home/zetaadm/$ZETA_PREP_MESOS
-    sudo chown zetaadm:zetaadm /home/zetaadm/$ZETA_INSTALL_MESOS
-    sudo chown zetaadm:zetaadm /home/zetaadm/runcmd.sh
-    sudo chown zetaadm:zetaadm /home/zetaadm/nodes.list
-    sudo chown zetaadm:zetaadm /home/zetaadm/$ZETA
-    sudo chown zetaadm:zetaadm /mapr/$CLUSTERNAME/user/zetaadm/cluster.conf
-    sudo su -c /home/zetaadm/$ZETA zetaadm
-fi
+echo "Moving Scripts to /home/zetaadm""
+
+# Install Scripts
+sudo cp ./$ZETA_LAYOUT /home/zetaadm/
+sudo chown zetaadm:zetaadm /home/zetaadm/$ZETA_LAYOUT
+sudo cp ./$ZETA_PACKAGER /home/zetaadm/
+sudo chown zetaadm:zetaadm /home/zetaadm/$ZETA_PACKAGER
+sudo cp ./$ZETA_DOCKER /home/zetaadm/
+sudo chown zetaadm:zetaadm /home/zetaadm/$ZETA_DOCKER
+sudo cp ./$ZETA_PREP_MESOS /home/zetaadm/
+sudo chown zetaadm:zetaadm /home/zetaadm/$ZETA_PREP_MESOS
+sudo cp ./$ZETA_INSTALL_MESOS /home/zetaadm/
+sudo chown zetaadm:zetaadm /home/zetaadm/$ZETA_INSTALL_MESOS
+
+# Settings and Node List
+sudo cp ./cluster.conf /home/zetaadm
+sudo cp ./cluster.conf /mapr/$CLUSTERNAME/user/zetaadm/
+sudo chown zetaadm:zetaadm /home/zetaadm/cluster.conf
+sudo chown zetaadm:zetaadm /mapr/$CLUSTERNAME/user/zetaadm/cluster.conf
+sudo cp ./nodes.list /home/zetaadm/
+sudo chown zetaadm:zetaadm /home/zetaadm/nodes.list
+
+# Zeta Packages
+sudo cp ./zeta_packages.tgz /home/zetaadm/
+sudo chown zetaadm:zetaadm /home/zetaadm/zeta_packages.tgz
+
+# Zeta runcmd helper
+sudo cp ./runcmd.sh /home/zetaadm/
+sudo chown zetaadm:zetaadm /home/zetaadm/runcmd.sh
+
+
+echo "Base Install Complete (barring any errors reported above)"
+echo "You are done using $IUSER. At this point Please su to zetaadm, and move the /home/zetaadm directory to start step 3"
+echo ""
+echo "$ sudo su"
+echo "$ su zetaadm"
+echo "$ cd ~"
+echo "$ ./$ZETA_LAYOUT"
 
 

@@ -25,10 +25,12 @@ CLUSTERNAME="awsmk"
 
 #########################
 # ZETA is the name of the script to run after the initial zeta work is done. This may be different for different orgs.
-ZETA="3_zeta_layout.sh"
-ZETA_DOCKER="4_zeta_install_docker.sh"
-ZETA_PREP_MESOS="5_zeta_install_mesos_dep.sh"
-ZETA_INSTALL_MESOS="6_zeta_install_mesos.sh"
+ZETA_LAYOUT="3_zeta_layout.sh"
+ZETA_PACKAGER="4_zeta_packager.sh"
+ZETA_DOCKER="5_zeta_install_docker.sh"
+ZETA_PREP_MESOS="6_zeta_install_mesos_dep.sh"
+ZETA_INSTALL_MESOS="7_zeta_install_mesos.sh"
+
 #########################
 # This is the domain that mesos-dns will handle. Defaults to mesos.
 MESOS_DOMAIN="mesos"
