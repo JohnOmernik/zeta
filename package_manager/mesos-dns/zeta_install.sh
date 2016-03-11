@@ -39,6 +39,9 @@ I=$(sudo maprcli node list -columns ip|grep $H)
 IP=$(echo $I|grep -E -o "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}")
 echo $IP
 
+RESOLVER=$(cat /etc/resolv.conf|grep nameserver|cut -d" " -f 2)
+
+
 
 cat > $INST_DIR/config.json << EOL
 {
@@ -48,7 +51,7 @@ cat > $INST_DIR/config.json << EOL
   "domain": "${ZETA_MESOS_DOMAIN}",
   "ns": "ns1",
   "port": 53,
-  "resolvers": [""],
+  "resolvers": ["$RESOLVER"],
   "timeout": 5,
   "listener": "0.0.0.0",
   "SOAMname": "root.ns1.${ZETA_MESOS_DOMAIN}",
@@ -78,7 +81,23 @@ cat > $INST_DIR/mesos-dns.marathon << EOF
 "ports":[],
 "instances": 1,
 "user": "root",
-"constraints": [["hostname", "LIKE", "c-atl1ctupoc0(5|7).ctu-fo.srsman.secureworks.net"]]
+"constraints": [["hostname", "LIKE", "$H"]]
 }
 
 EOF
+
+echo "Getting a marathon hostname from the env script"
+
+MAR_HOST=$(echo $ZETA_MARATHON_MASTERS|cut -d" " -f1)
+
+echo "Starting mesos-dns"
+echo ""
+/home/zetaadm/zetaadmin/marathonprod_submit.sh $INST_DIR/mesos-dns.marathon ${MAR_HOST}
+echo ""
+echo ""
+sleep 2
+echo "Updating resolve.conf This won't survive reboot. This is fragile make stronger for production"
+echo ""
+/home/zetaadm/zetaadmin/run_cmd.sh "sudo sed -i -r 's/nameserver $RESOLVER/nameserver $IP/' /etc/resolv.conf"
+echo ""
+echo "Mesos DNS is installed"

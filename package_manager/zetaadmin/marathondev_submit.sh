@@ -12,6 +12,10 @@ MARATHON_URL="http://marathon${MARATHON_INSTANCE}.${ZETA_MESOS_DOMAIN}:${ZETA_MA
 echo "$MARATHON_URL"
 
 MARJSON=$1
+MARHOST=$2
+if [ "$MARHOST" != "" ]; then
+    MARATHON_URL="http://${MARHOST}:${ZETA_MARATHON_PORT}/v2/apps"
+fi
 
 if [ "$MARJSON" == "" ]; then
    echo "Run this as a proper prived used passing the name of the json file you want to start as the only variables"

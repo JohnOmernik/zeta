@@ -8,7 +8,7 @@ cd "$(dirname "$0")"
 
 . /mapr/$CLUSTERNAME/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
 
-INST_DIR="/mapr/$CLUSTERNAME/mesos/$MESOS_ROLE/dockerregv2"
+INST_DIR="/mapr/$CLUSTERNAME/mesos/$MESOS_ROLE/${ZETA_DOCKER_REG_ID}"
 
 if [ -d "$INST_DIR" ]; then
     echo "The Installation Directory already exists at $INST_DIR"
@@ -19,17 +19,17 @@ echo "Making Directories for Docker"
 mkdir -p $INST_DIR
 mkdir -p $INST_DIR/dockerdata
 
-# We use the already built Docker Registry
+# We use the already built Docker Registry This could change in the future
 sudo docker pull registry:2
-sudo docker tag zeta/dockerregv2 registry:2
+sudo docker tag registry:2 zeta/${ZETA_DOCKER_REG_ID}
 H=$(hostname -f)
 
 echo "To ensure that the image exists for Docker Register V2, we use constraints to pin it to this host, this can be changed at a later time, however you must ensure the image zeta/dockerregv2 exists on the hosts in the constraints"
 
 
-cat > $INST_DIR/dockerregv2.marathon << EOF
+cat > $INST_DIR/${ZETA_DOCKER_REG_ID}.marathon << EOF
 {
-  "id": "dockerregv2",
+  "id": "${ZETA_DOCKER_REG_ID}",
   "cpus": 1,
   "mem": 1024,
   "instances": 1,
@@ -40,15 +40,24 @@ cat > $INST_DIR/dockerregv2.marathon << EOF
   "container": {
     "type": "DOCKER",
     "docker": {
-      "image": "zeta/dockerregv2",
+      "image": "zeta/${ZETA_DOCKER_REG_ID}",
       "network": "BRIDGE",
       "portMappings": [
-        { "containerPort": 5000, "hostPort": 0, "servicePort": 5002, "protocol": "tcp" }
+        { "containerPort": 5000, "hostPort": 0, "servicePort": ${ZETA_DOCKER_REG_PORT}, "protocol": "tcp" }
       ]
     },
     "volumes": [
-      { "containerPath": "/var/lib/registry", "hostPath": "/mapr/$CLUSTERNAME/mesos/prod/dockerregv2/dockerdata", "mode": "RW" }
+      { "containerPath": "/var/lib/registry", "hostPath": "/mapr/$CLUSTERNAME/mesos/prod/${ZETA_DOCKER_REG_ID}/dockerdata", "mode": "RW" }
     ]
   }
 }
 EOF
+echo ""
+echo ""
+/home/zetaadm/zetaadmin/marathon${MESOS_ROLE}_submit.sh $INST_DIR/${ZETA_DOCKER_REG_ID}.marathon
+
+
+echo ""
+echo ""
+
+echo "Docker Reg Installed"
