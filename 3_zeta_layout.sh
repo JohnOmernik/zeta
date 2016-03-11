@@ -33,10 +33,10 @@ ZETA_ENV_FILE="/mapr/${CLUSTERNAME}/mesos/kstore/env/zeta_${CLUSTERNAME}_prod.sh
 ####################
 ####### Work to Clean up Default Volumes:
 
-sudo maprcli volume remove -name tables_vol
-sudo maprcli volume remove -name mapr.hbase
-sudo maprcli volume remove -name shared_data_vol
-sudo maprcli volume remove -name mapr.apps
+sudo maprcli volume remove -name tables_vol 2> /dev/null
+sudo maprcli volume remove -name mapr.hbase 2> /dev/null
+sudo maprcli volume remove -name shared_data_vol 2> /dev/null
+sudo maprcli volume remove -name mapr.apps 2> /dev/null
 sudo rm -rf /mapr/$CLUSTERNAME/apps
 
 
@@ -372,4 +372,3 @@ cat > /mapr/$CLUSTERNAME/mesos/kstore/agents/credential.json << EOL4
 EOL4
 
 
-tar zxf zetaadmin.tgz
