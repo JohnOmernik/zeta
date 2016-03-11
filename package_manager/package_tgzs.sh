@@ -8,6 +8,11 @@ PKG_DIR="./zeta_packages"
 
 # Loop through directories ignoring $PKG_DIR as well as .
 
+if [ ! -d "$PKG_DIR" ]; then
+    mkdir $PKG_DIR
+fi
+
+
 for D in `find . -type d`
 do
     if [ "$D" != "." ]; then
