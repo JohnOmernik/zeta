@@ -17,3 +17,13 @@ if [ -d "$INST_DIR" ]; then
 fi
 echo "Making Directories for kafka"
 mkdir -p $INST_DIR
+mkdir -p ${INST_DIR}/${ZETA_KAFKA_ENV}
+
+cd $INST_DIR
+echo "Getting and building mesos kakfa
+
+git clone https://github.com/mesos/kafka
+
+cd kafka
+
+./gradlew jar
