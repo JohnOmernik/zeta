@@ -5,6 +5,9 @@ The goal of the package manager is to make some packages easy to install on the 
 ---
 ## Currently included
 * marathon_native - An install that pulls from Mesosphere a native instance of Marathon. This is used for the main "prod" role of Marathon running on the cluster
+* marathon-lb - Load balancing and service discovery on Zeta
+* dockerregv2 - A Docker registry running on Zeta
+* mesos-dns - Service discovery on Zeta
 * zetaadmin - A collection of scripts used for administrating the Zeta cluster. More details inside
 
 ## Conventions for packages

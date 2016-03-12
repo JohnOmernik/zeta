@@ -5,9 +5,17 @@ Scripts for Running Zeta Architecture
 This Repo includes scripts for running Zeta Architecure. The design goals will be such that certain script steps will have multiple files based on which route you want to go. For example 1_aws_prep_zeta.sh is only run if you are using an AWS based setup of MapR from the AWS Marketplace using MapR's Cloud formation.
 
 ## Steps to install using reference AWS installation
+
+First you need to have a running MapR cluster based on the Marketplace AMIs. This needs to be M5 or M7.  Once you have a running cluster proceed to Zeta Steps:
+
 1. Copy cluster.conf.template to cluster.conf
 2. Edit settings in cluster.conf based on the settings you used in your AWS cluster. (Update the IP address to connect to, the key to connect to a node, the cluster name, passwords for Mesos Roles etc)
-3. 
+3. Run 1_aws_prep_zeta.sh - It will give you instructions for the next step which will be... 
+4. Log on to node and run 2_zeta_base.sh as ec2-user When this is finished, it will instruct you to
+5. sudo up to root, the change user to zetaadm, go to the zetaadm home directory. 
+6. Now run 3_zeta_layout.sh - This puts things right for zeta!
+7. Now run scripts in order, number 4 through 8 If all goes well you should have a running Zeta install
+8. You can now run 9 to see how to install some zeta specific packages. The order is recommended. 
 
 
 
@@ -41,29 +49,11 @@ This Repo includes scripts for running Zeta Architecure. The design goals will b
   * Add mapr and zetaadm to all those groups on all nodes
   * Setup major directories (apps, data, etl, mesos) in MapR FS Set permissions etc.
   * Setup kstore directories and basic configuration for Mesos
-
-At this point the automatation stops and waits for you the operation the next steps. 
-
-
-
-Basic steps:
-
-1. Prep the built cluster. At this point MapR should be running and ready to go with the nodes having /mapr/$CLUSTERNAME mounted on every node.  
-2.Run commands that need to be run on every node in the cluster. 
-
-3. Run Cluster wide scripts. 
-
-At this point we hope to install Mesos, however, the logic isn't set yet. We may do certain tasks in 2 to prep for Mesos, we may even install Mesos/Docker in step two (more to come)
-
-3. The cluster wide scripts setup a basic Zeta Layout, this isn't set in stone, but acts as a nice base to build and customize to your environment.  More documentation to come here. 
+* 4_zeta_packager.sh
+* 5_zeta_install_docker.sh
+* 6_zeta_install_mesos_dep.sh
+* 7_zeta_install_mesos.sh
+* 8_zeta_start_mesos.sh
+* 9_zeta_install_examples.sh
 
 
-So, for a AWS Cluster at this point
-
-1. Create and build using the MapR Marketplace CFT
-2. Update cluster.conf with the setting for your cluster (clustername etc)
-2. From a box that has access to the private key specified in the CFT in step one: Run 1_aws_prep_zeta.sh
-3. Then login to the IHOST node (specified in cluster.conf) and run 2_zeta_base.sh
-4. If $ZETA is specified in cluster.conf to be 3_zeta_layout.sh, this script will automatically run 
-
-The cluster is now ready for next steps.  (More to come)
