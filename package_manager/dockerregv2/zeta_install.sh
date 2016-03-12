@@ -41,10 +41,7 @@ cat > $INST_DIR/${ZETA_DOCKER_REG_ID}.marathon << EOF
     "type": "DOCKER",
     "docker": {
       "image": "zeta/${ZETA_DOCKER_REG_ID}",
-      "network": "BRIDGE",
-      "portMappings": [
-        { "containerPort": 5000, "hostPort": 0, "servicePort": ${ZETA_DOCKER_REG_PORT}, "protocol": "tcp" }
-      ]
+      "network": "HOST"
     },
     "volumes": [
       { "containerPath": "/var/lib/registry", "hostPath": "/mapr/$CLUSTERNAME/mesos/prod/${ZETA_DOCKER_REG_ID}/dockerdata", "mode": "RW" }
@@ -52,6 +49,7 @@ cat > $INST_DIR/${ZETA_DOCKER_REG_ID}.marathon << EOF
   }
 }
 EOF
+echo "Note: dockerregv2 uses host networking and the exposed port of 5000 due to the need to have the registry reachable before marathon-lb is up"
 echo ""
 echo ""
 /home/zetaadm/zetaadmin/marathon${MESOS_ROLE}_submit.sh $INST_DIR/${ZETA_DOCKER_REG_ID}.marathon
