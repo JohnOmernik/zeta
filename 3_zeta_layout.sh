@@ -280,7 +280,7 @@ EOL2
 # This is the stub version of this, more information can be added as needed
 
 # GET ALL NODES
-ALL_NODES=$(sudo maprcli node list -columns ip|cut -d" " -f1|grep -v "hostname")
+ALL_NODES=$(sudo maprcli node list -columns ip|cut -d" " -f1|grep -v "hostname"|tr "\n" " ")
 
 # Get 3 Master Nodes for Mesos Master and Marathon Master  
 MASTER_NODES=$(echo ${ALL_NODES}|cut -d" " -f1,2,3)
