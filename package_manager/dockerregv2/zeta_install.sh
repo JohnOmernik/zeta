@@ -60,7 +60,7 @@ cat > $INST_DIR/${ZETA_DOCKER_REG_ID}.marathon << EOF
       "network": "HOST"
     },
     "volumes": [
-      { "containerPath": "/var/lib/registry", "hostPath": "/mapr/$CLUSTERNAME/mesos/prod/${ZETA_DOCKER_REG_ID}/dockerdata", "mode": "RW" }
+      { "containerPath": "/var/lib/registry", "hostPath": "/mapr/$CLUSTERNAME/mesos/${MESOS_ROLE}/${ZETA_DOCKER_REG_ID}/dockerdata", "mode": "RW" }
     ]
   }
 }
