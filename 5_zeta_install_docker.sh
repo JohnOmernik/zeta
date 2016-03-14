@@ -31,5 +31,5 @@ sudo service docker start
 EOL
 
 
-chdmo +x $INST_FILE
+chmod +x $INST_FILE
 /home/zetaadm/zetaadmin/run_cmd.sh "$INST_FILE"
