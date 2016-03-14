@@ -1,5 +1,8 @@
 #!/bin/bash
 
+echo "This package is not ready for install. Exiting... "
+exit 1
+
 MESOS_ROLE="prod"
 
 CLUSTERNAME=$(ls /mapr)

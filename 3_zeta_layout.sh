@@ -375,3 +375,5 @@ cat > /mapr/$CLUSTERNAME/mesos/kstore/agents/credential.json << EOL4
 EOL4
 
 
+echo "Now follow the scripts in this directory in order, 4_, 5_ etc to finish installation"
+
