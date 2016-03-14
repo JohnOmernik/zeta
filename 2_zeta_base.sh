@@ -164,6 +164,17 @@ sudo cp ./$ZETA_INSTALL_MESOS /home/zetaadm/
 sudo chown zetaadm:zetaadm /home/zetaadm/$ZETA_INSTALL_MESOS
 sudo chmod +x /home/zetaadm/$ZETA_INSTALL_MESOS
 
+sudo cp ./8_zeta_start_mesos.sh /home/zetaadm/
+sudo chown zetaadm:zetaadm /home/zetaadm/8_zeta_start_mesos.sh 
+sudo chmod +x /home/zetaadm/8_zeta_start_mesos.sh 
+
+sudo cp ./9_zeta_install_examples.sh /home/zetaadm/
+sudo chown zetaadm:zetaadm /home/zetaadm/9_zeta_install_examples.sh
+sudo chmod +x /home/zetaadm/9_zeta_install_examples.sh
+
+
+
+
 # Settings and Node List
 sudo cp ./cluster.conf /home/zetaadm
 sudo cp ./cluster.conf /mapr/$CLUSTERNAME/user/zetaadm/
