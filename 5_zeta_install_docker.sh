@@ -28,19 +28,8 @@ sudo yum -y install docker-engine
 
 # Start Docker
 sudo service docker start
-
-sudo mkdir -p /etc/systemd/system/docker.service.d
-sudo tee /etc/systemd/system/docker.service.d/docker.conf <<- 'EOF1'
-[Service]
-ExecStart=
-ExecStart=/usr/bin/docker daemon -H fd:// --insecure-registry=$ZETA_DOCKER_REG_URL
-EOF1
-sudo systemctl daemon-reload
-sudo service docker restart
-
 EOL
 
-chmod +x $INST_FILE
 
+chdmo +x $INST_FILE
 /home/zetaadm/zetaadmin/run_cmd.sh "$INST_FILE"
-

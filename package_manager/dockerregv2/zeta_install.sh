@@ -19,6 +19,22 @@ echo "Making Directories for Docker"
 mkdir -p $INST_DIR
 mkdir -p $INST_DIR/dockerdata
 
+APP_IP="dockerregv2"
+APP_PORT="5000"
+
+# WRITE Env File for Docker Register V2 into sourced scripts
+cat > /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP_ID}.sh << EOL1
+#!/bin/bash
+export ZETA_DOCKER_REG_ID="${APP_IP}"
+export ZETA_DOCKER_REG_PORT="${APP_PORT}"
+export ZETA_DOCKER_REG_URL="\${ZETA_DOCKER_REG_ID}.\${ZETA_MARATHON_ENV}.\${ZETA_MESOS_DOMAIN}:\${ZETA_DOCKER_REG_PORT}"
+EOL1
+# Source the script!
+. /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP_ID}.sh 
+
+
+
+
 # We use the already built Docker Registry This could change in the future
 sudo docker pull registry:2
 sudo docker tag registry:2 zeta/${ZETA_DOCKER_REG_ID}
@@ -57,5 +73,23 @@ echo ""
 
 echo ""
 echo ""
+
+
+
+# Update Docker on all nodes to use insecure registry
+cat > /mapr/$CLUSTERNAME/user/zetaadm/5_update_docker.sh << EOF2
+sudo mkdir -p /etc/systemd/system/docker.service.d
+sudo tee /etc/systemd/system/docker.service.d/docker.conf <<- 'EOF1'
+[Service]
+ExecStart=
+ExecStart=/usr/bin/docker daemon -H fd:// --insecure-registry=$ZETA_DOCKER_REG_URL
+EOF1
+sudo systemctl daemon-reload
+sudo service docker restart
+EOF2
+chmod +x /mapr/$CLUSTERNAME/user/zetaadm/5_update_docker.sh
+
+echo "Updating Docker Daemon to handle insecure registry"
+/home/zetaadm/zetaadmin/run_cmd.sh "/mapr/$CLUSTERNAME/user/zetaadm/5_update_docker.sh"
 
 echo "Docker Reg Installed"

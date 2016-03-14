@@ -285,7 +285,15 @@ ALL_NODES=$(sudo maprcli node list -columns ip|cut -d" " -f1|grep -v "hostname"|
 # Get 3 Master Nodes for Mesos Master and Marathon Master  
 MASTER_NODES=$(echo ${ALL_NODES}|cut -d" " -f1,2,3)
 
+# ENV Main
 DIR="/mapr/$CLUSTERNAME/mesos/kstore/env"
+sudo mkdir -p $DIR
+sudo chown zetaadm:zetaadm $DIR
+sudo chmod 775 $DIR
+
+
+# ENV Added Sripts
+DIR="/mapr/$CLUSTERNAME/mesos/kstore/env/env_prod"
 sudo mkdir -p $DIR
 sudo chown zetaadm:zetaadm $DIR
 sudo chmod 775 $DIR
@@ -308,33 +316,19 @@ export ZETA_MESOS_LEADER_PORT="5050"
 export ZETA_NODES="${ALL_NODES}"
 export ZETA_MESOS_AGENTS="${ALL_NODES}"
 export ZETA_MESOS_MASTERS="${MASTER_NODES}"
-# END GLOBAL ENV VARIABLES
 
 export ZETA_MARATHON_MASTERS="${MASTER_NODES}"
 export ZETA_MARATHON_ENV="marathonprod"
 export ZETA_MARATHON_HOST="\${ZETA_MARATHON_ENV}.\${ZETA_MESOS_DOMAIN}"
 export ZETA_MARATHON_PORT="20080"
 
-
-export ZETA_DOCKER_REG_ID="dockerregv2"
-export ZETA_DOCKER_REG_PORT="5000"
-export ZETA_DOCKER_REG_URL="\${ZETA_DOCKER_REG_ID}.\${ZETA_MARATHON_ENV}.\${ZETA_MESOS_DOMAIN}:\${ZETA_DOCKER_REG_PORT}"
-
 export ZETA_CHRONOS_ENV="chronosprod"
 export ZETA_CHRONOS_HOST="\${ZETA_CHRONOS_ENV}.\${ZETA_MARATHON_ENV}.\${ZETA_MESOS_DOMAIN}"
 export ZETA_CHRONOS_PORT="20180"
+# END GLOBAL ENV VARIABLES
 
-export ZETA_KAFKA_ENV="kafkaprod"
-export ZETA_KAFKA_ZK="\${ZETA_ZK}/\${ZETA_KAFKA_ENV}"
-
-export ZETA_DRILL_ENV="zetadrill"
-export ZETA_DRILL_WEB_HOST="\${ZETA_DRILL_ENV}.\${ZETA_MARATHON_ENV}.\${ZETA_MESOS_DOMAIN}"
-export ZETA_DRILL_WEB_PORT="20000"
-export ZETA_DRILL_USER_PORT="20001"
-export ZETA_DRILL_BIT_PORT="20002"
-
-
-
+# Source env_pro
+. /mapr/$CLUSTERNAME/mesos/kstore/env/env_prod/*
 
 if [ "\$1" == "1" ]; then
     env|grep -P "^ZETA_"
@@ -343,6 +337,12 @@ fi
 EOL3
 
 chmod +x $ZETA_ENV_FILE
+
+#Create a dummy script in the env_prod directory so that file not found errors don't appear when sourcing main file
+cat > /mapr/$CLUSTERNAME/mesos/kstore/env/env_prod/env_prod.sh << EOL5
+#!/bin/bash
+# Basic script to keep file not found errors from happening 
+EOL5
 
 #########
 # By creating a world reable directory in MapRFS for tickets, and then setting permission on each ticket to be only user readble, we have a one stop shop to store tickets
