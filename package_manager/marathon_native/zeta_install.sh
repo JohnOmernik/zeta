@@ -9,6 +9,8 @@ cd "$(dirname "$0")"
 
 . /mapr/$CLUSTERNAME/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
 
+. /mapr/$CLUSTERNAME/mesos/kstore/$MESOS_ROLE/secret/credential.sh
+
 INST_DIR="/mapr/$CLUSTERNAME/mesos/$MESOS_ROLE/marathon"
 
 if [ -d "$INST_DIR" ]; then
@@ -41,13 +43,6 @@ read PASS
 echo ""
 stty echo
 
-stty -echo
-printf "Please enter the Mesos ${MESOS_ROLE} role principal password: "
-read PASS1
-echo ""
-stty echo
-
-
 mkdir -p /mapr/$CLUSTERNAME/mesos/kstore/${MESOS_ROLE}/marathon
 
 cat > /mapr/$CLUSTERNAME/mesos/kstore/${MESOS_ROLE}/marathon/marathon.sh << EOL
@@ -60,7 +55,7 @@ cat > /mapr/$CLUSTERNAME/mesos/kstore/${MESOS_ROLE}/marathon/marathon.txt << EOL
 $USER:$PASS
 EOL1
 
-echo -n $PASS1 > /mapr/$CLUSTERNAME/mesos/kstore/${MESOS_ROLE}/marathon/mesossecret.txt
+echo -n $ROLE_PASS > /mapr/$CLUSTERNAME/mesos/kstore/${MESOS_ROLE}/marathon/mesossecret.txt
 
 
 echo "Marathon_native installed. Start via ~/zetaadmin/startmarathon.sh"

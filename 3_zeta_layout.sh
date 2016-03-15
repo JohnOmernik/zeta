@@ -209,6 +209,14 @@ sudo chown zetaadm:zetaprodmesos $DIR
 sudo chmod 2750 $DIR
 echo "$MESOS_PROD_PRNCPL $MESOS_PROD_PASS" > $DIR/credential.txt
 
+cat > $DIR/credential.sh << EOF10
+#!/bin/bash
+export ROLE_PRIN="$MESOS_PRNCPL"
+export ROLE_PASS="$MESOS_PRNCPL_PASS"
+EOF10
+
+
+
 #########
 # The dev location is for dev frameworks. Secrets in the secret directory, other information in subdirectories per framework 
 DIR="/mapr/$CLUSTERNAME/mesos/kstore/dev"

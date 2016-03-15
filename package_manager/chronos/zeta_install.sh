@@ -8,6 +8,8 @@ cd "$(dirname "$0")"
 
 . /mapr/$CLUSTERNAME/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
 
+. /mapr/$CLUSTERNAME/mesos/kstore/$MESOS_ROLE/secret/credential.sh
+
 INST_DIR="/mapr/$CLUSTERNAME/mesos/$MESOS_ROLE/chronos"
 
 if [ -d "$INST_DIR" ]; then
@@ -29,11 +31,6 @@ printf "Please enter the Chronos framework http password: "
 read PASS
 echo ""
 stty echo
-stty -echo
-printf "Please enter the Mesos ${MESOS_ROLE} role principal password: "
-read PASS1
-echo ""
-stty echo
 
 
 mkdir -p /mapr/$CLUSTERNAME/mesos/kstore/${MESOS_ROLE}/chronos
@@ -44,7 +41,7 @@ CHRONOS_USER="$USER"
 CHRONOS_PASS="$PASS"
 EOL
 
-echo -n $PASS1 > /mapr/$CLUSTERNAME/mesos/kstore/${MESOS_ROLE}/chronos/mesossecret.txt
+echo -n $ROLE_PASS > /mapr/$CLUSTERNAME/mesos/kstore/${MESOS_ROLE}/chronos/mesossecret.txt
 
 
 
@@ -75,7 +72,7 @@ cat > ${INST_DIR}/chronosprod/chronosprod.marathon << EOF
     "CHRONOS_MESOS_ROLE": "*",
     "CHRONOS_MESOS_FRAMEWORK_NAME": "${ZETA_CHRONOS_ENV}",
     "CHRONOS_CLUSTER_NAME": "${CLUSTERNAME}",
-    "CHRONOS_MESOS_AUTHENTICATION_PRINCIPAL": "zeta${MESOS_ROLE}control",
+    "CHRONOS_MESOS_AUTHENTICATION_PRINCIPAL": "${ROLE_PRIN}",
     "CHRONOS_MESOS_AUTHENTICATION_SECRET_FILE": "/auth/mesossecret.txt",
     "MESOSPHERE_HTTP_CREDENTIALS": "${USER}:${PASS}"
   },
