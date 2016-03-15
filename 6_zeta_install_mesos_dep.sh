@@ -48,7 +48,7 @@ NUM_INST=$(/home/zetaadm/zetaadmin/run_cmd.sh "mvn -version 2>&1"|grep "Maven ho
 
 while [ $NUM_INST -ne $NUM_NODES ]
 do
-echo "Waiting for the number of nodes installed $NUM_INST to equal the number of total nodes $NUM_NODES in a 5 second loop. (Break if taking to long)"
+echo "Waiting for the number of nodes installed $NUM_INST to equal the number of total nodes $NUM_NODES in a 5 second loop. (Could take a while)"
 NUM_INST=$(/home/zetaadm/zetaadmin/run_cmd.sh "mvn -version 2>&1"|grep "Maven home"|wc -l)
 sleep 5
 done

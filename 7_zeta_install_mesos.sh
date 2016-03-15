@@ -37,7 +37,7 @@ NUM_INST=$(/home/zetaadm/zetaadmin/run_cmd.sh "mesos 2>&1"|grep "Available comma
 
 while [ $NUM_INST -ne $NUM_NODES ]
 do
-echo "Waiting for the number of nodes installed $NUM_INST to equal the number of total nodes $NUM_NODES in a 5 second loop. (Break if taking to long)"
+echo "Waiting for the number of nodes installed $NUM_INST to equal the number of total nodes $NUM_NODES in a 5 second loop. (Could Take a while)"
 NUM_INST=$(/home/zetaadm/zetaadmin/run_cmd.sh "mesos 2>&1"|grep "Available commands"|wc -l)
 sleep 5
 done
