@@ -211,8 +211,8 @@ echo "$MESOS_PROD_PRNCPL $MESOS_PROD_PASS" > $DIR/credential.txt
 
 cat > $DIR/credential.sh << EOF10
 #!/bin/bash
-export ROLE_PRIN="$MESOS_PRNCPL"
-export ROLE_PASS="$MESOS_PRNCPL_PASS"
+export ROLE_PRIN="$MESOS_PROD_PRNCPL"
+export ROLE_PASS="$MESOS_PROD_PRNCPL_PASS"
 EOF10
 
 
