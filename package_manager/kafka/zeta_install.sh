@@ -1,8 +1,7 @@
 #!/bin/bash
 
 
-echo "This package is not ready for install: exiting"
-exit 1
+#exit 1
 
 
 MESOS_ROLE="prod"
@@ -13,6 +12,9 @@ cd "$(dirname "$0")"
 
 . /mapr/$CLUSTERNAME/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
 
+. /mapr/$CLUSTERNAME/mesos/kstore/$MESOS_ROLE/secret/credential.sh
+
+APP_ID="kafkaprod"
 INST_DIR="/mapr/$CLUSTERNAME/mesos/$MESOS_ROLE/kafka"
 
 if [ -d "$INST_DIR" ]; then
@@ -21,14 +23,13 @@ if [ -d "$INST_DIR" ]; then
     exit 1
 fi
 echo "Making Directories for kafka"
-mkdir -p $INST_DIR
-mkdir -p ${INST_DIR}/${ZETA_KAFKA_ENV}
+mkdir -p ${INST_DIR}
+mkdir -p ${INST_DIR}/${APP_ID}
 
-APP_ID="kafkaprod"
 
 cat > /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP_ID}.sh << EOL1
 #!/bin/bash
-export ZETA_KAFKA_ENV="${APP_IP}"
+export ZETA_KAFKA_ENV="${APP_ID}"
 export ZETA_KAFKA_ZK="\${ZETA_ZK}/\${ZETA_KAFKA_ENV}"
 export ZETA_KAFKA_API_PORT="21000"
 EOL1
@@ -37,7 +38,7 @@ EOL1
 
 cd $INST_DIR
 
-echo "Getting and building mesos kakfa
+echo "Getting and building mesos kakfa"
 git clone https://github.com/mesos/kafka
 cd kafka
 
@@ -54,12 +55,6 @@ cd ${APP_ID}
 wget https://archive.apache.org/dist/kafka/0.9.0.1/kafka_2.10-0.9.0.1.tgz
 
 tar zcf kafka-mesos-${KAFKA_MESOS_VER}.tgz ./*
-
-stty -echo
-printf "Please enter the Mesos ${MESOS_ROLE} role principal password: "
-read PASS1
-echo ""
-stty echo
 
 cat > /mapr/$CLUSTERNAME/mesos/${MESOS_ROLE}/kafka/${ZETA_KAFKA_ENV}/kafka-mesos.properties << EOF
 # Scheduler options defaults. See `./kafka-mesos.sh help scheduler` for more details
@@ -78,17 +73,17 @@ zk=${ZETA_KAFKA_ZK}
 # Need different port for each framework
 api=http://${ZETA_KAFKA_ENV}.${ZETA_MARATHON_ENV}.${ZETA_MESOS_DOMAIN}:${ZETA_KAFKA_API_PORT}
 
-principal=zetaprodcontrol
+principal=${ROLE_PRIN}
 
-secret=${PASS1}
+secret=${ROLE_PASS}
 
 EOF
 
-cat > /mapr/$CLUSTERNAME/mesos/${MESOS_ROLE}/kafka/${ZETA_KAFKA_ENV}/${ZETA_KAFKA_ENV}.marathon >> EOF2
+cat > /mapr/$CLUSTERNAME/mesos/${MESOS_ROLE}/kafka/${ZETA_KAFKA_ENV}/${ZETA_KAFKA_ENV}.marathon << EOF2
 {
 "id": "${ZETA_KAFKA_ENV}",
 "instances": 1,
-"cmd": "cd kafka && ./kafka-mesos.sh scheduler /mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/kafka/${ZETA_KAFKA_ENV}/kafka-mesos.properties",
+"cmd": "./kafka-mesos.sh scheduler /mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/kafka/${ZETA_KAFKA_ENV}/kafka-mesos.properties",
 "cpus": 1,
 "mem": 256,
 "ports":[],
@@ -102,4 +97,9 @@ cat > /mapr/$CLUSTERNAME/mesos/${MESOS_ROLE}/kafka/${ZETA_KAFKA_ENV}/${ZETA_KAFK
 
 EOF2
 
-
+echo ""
+echo ""
+/home/zetaadm/zetaadmin/marathon${MESOS_ROLE}_submit.sh ${INST_DIR}/${APP_ID}/${APP_ID}.marathon
+echo ""
+echo ""
+echo "Kafka Installed: Please go to ${INST_DIR}/${APP_ID} and run initial_startup.sh to configure actual Kafka Brokers"
