@@ -65,15 +65,6 @@ cat > $INST_DIR/${ZETA_DOCKER_REG_ID}.marathon << EOF
   }
 }
 EOF
-echo "Note: dockerregv2 uses host networking and the exposed port of 5000 due to the need to have the registry reachable before marathon-lb is up"
-echo ""
-echo ""
-/home/zetaadm/zetaadmin/marathon${MESOS_ROLE}_submit.sh $INST_DIR/${ZETA_DOCKER_REG_ID}.marathon
-
-
-echo ""
-echo ""
-
 
 
 # Update Docker on all nodes to use insecure registry
@@ -87,9 +78,20 @@ EOF1
 sudo systemctl daemon-reload
 sudo service docker restart
 EOF2
+
 chmod +x /mapr/$CLUSTERNAME/user/zetaadm/5_update_docker.sh
 
 echo "Updating Docker Daemon to handle insecure registry"
 /home/zetaadm/zetaadmin/run_cmd.sh "/mapr/$CLUSTERNAME/user/zetaadm/5_update_docker.sh"
+
+
+echo "Note: dockerregv2 uses host networking and the exposed port of 5000 due to the need to have the registry reachable before marathon-lb is up"
+echo ""
+echo ""
+/home/zetaadm/zetaadmin/marathon${MESOS_ROLE}_submit.sh $INST_DIR/${ZETA_DOCKER_REG_ID}.marathon
+echo ""
+echo ""
+
+
 
 echo "Docker Reg Installed"
