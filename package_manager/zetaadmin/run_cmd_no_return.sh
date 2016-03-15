@@ -8,6 +8,6 @@ cd "$(dirname "$0")"
 
 for NODE in ${ZETA_NODES}
 do
-   ssh -o StrictHostKeyChecking=no $NODE "nohup $1 > /dev/null 2>&1"e
+   ssh -o StrictHostKeyChecking=no $NODE "nohup $1 > /dev/null 2>&1 &"
 done
 

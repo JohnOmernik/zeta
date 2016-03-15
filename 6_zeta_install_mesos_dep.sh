@@ -32,20 +32,24 @@ sudo yum groupinstall -y "Development Tools"
 
 # Install other Mesos dependencies.
 sudo yum install -y apache-maven python-devel java-1.8.0-openjdk-devel zlib-devel libcurl-devel openssl-devel cyrus-sasl-devel cyrus-sasl-md5 apr-devel subversion-devel apr-util-devel
-
 EOL
 
 chmod +x $INST_FILE
 
 /home/zetaadm/zetaadmin/run_cmd_no_return.sh "$INST_FILE"
 
-echo "Run: "
-echo ""
-echo "/home/zetaadm/zetaadmin/run_cmd.sh \"hostname; git\""
-echo ""
-echo "All nodes should return without error before preceeding"
+NUM_NODES=$(echo "$ZETA_NODES"|tr " " "\n"|wc -l)
 
+NUM_INST=$(/home/zetaadm/zetaadmin/run_cmd.sh "mvn -version 2>&1"|grep "Maven home"|wc -l)
 
+while [ $NUM_INST -ne $NUM_NODES ]
+do
+echo "Waiting for the number of nodes installed $NUM_INST to equal the number of total nodes $NUM_NODES in a 5 second loop. (Break if taking to long)"
+NUM_INST=$(/home/zetaadm/zetaadmin/run_cmd.sh "mvn -version 2>&1"|grep "Maven home"|wc -l)
+sleep 5
+done
+
+echo "Mesos Prereqs installed"
 
 
 

@@ -34,9 +34,24 @@ EOL
 chmod +x $INST_FILE
 /home/zetaadm/zetaadmin/run_cmd_no_return.sh "$INST_FILE"
 
-echo "Run: "
-echo ""
-echo "/home/zetaadm/zetaadmin/run_cmd.sh \"hostname; sudo docker ps\""
-echo ""
-echo "All nodes should return without error before preceeding"
+
+NUM_NODES=$(echo "$ZETA_NODES"|tr " " "\n"|wc -l)
+
+NUM_INST=$(/home/zetaadm/zetaadmin/run_cmd.sh "sudo docker ps 2>&1"|grep "CONTAINER ID"|wc -l)
+
+while [ $NUM_INST -ne $NUM_NODES ]
+do
+echo "Waiting for the number of nodes installed $NUM_INST to equal the number of total nodes $NUM_NODES in a 5 second loop. (Break if taking to long)"
+NUM_INST=$(/home/zetaadm/zetaadmin/run_cmd.sh "sudo docker ps 2>&1"|grep "CONTAINER ID"|wc -l)
+sleep 5
+done
+
+
+
+
+echo "Docker Installed on all nodes"
+
+
+
+
 
