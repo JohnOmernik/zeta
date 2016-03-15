@@ -37,7 +37,15 @@ EOL
 
 chmod +x $INST_FILE
 
-/home/zetaadm/zetaadmin/run_cmd.sh "$INST_FILE"
+/home/zetaadm/zetaadmin/run_cmd_no_return.sh "$INST_FILE"
+
+echo "Run: "
+echo ""
+echo "/home/zetaadm/zetaadmin/run_cmd.sh \"hostname; git\""
+echo ""
+echo "All nodes should return without error before preceeding"
+
+
 
 
 

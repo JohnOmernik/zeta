@@ -12,6 +12,16 @@ MapR is the foundational filesystem for Zeta. It's a capable clustered filesyste
 
 In this setup, MapR-FS is installed on every node, also, every node runs a NFS server that acts as a gateway to the Shared/Clustered Filesystem.  Thus when you name your cluster, say 'zetaaws' every node will have a mount point at /mapr/zetaaws this is your clustered filesystem and is the same data on every node.  
 
+### Users
+---
+There are two users, and a number of groups installed on every node.  The group correspond to two default roles (prod and dev) and the directories explained below.  If you want more users, you will have to add users on every node, and ensure the group membership is the same on ever node. This is where potentially using ldap seems like a better option at scale. 
+
+The two users added are mapr and zetaadm.
+* mapr is used for cluster services between MapR FS nodes. This is a admin user for your data. 
+* zetaadm is a user added by install process. It has sudo access on all nodes, and on whichever node is $IHOST in your cluster.conf is a private key that can ssh to all nodes.  This is the user packages should be installed with and all parts of the process, including 3_ forward should use. 
+
+### Directories
+---
 This root is where the layout of Zeta starts. There are 5 main directories to be explained here.  The First is the users directory. Users all get their own home directory volume. It's mounted at /user/%username% (thus from a POSIX perspective on the node, it's at /mapr/$CLUSTERNAME/user/%username%). 
 
 The next four directories all share two main "roles". The goal of this is provide groups (installed as part of the scripts) that can divide each of the following four workloads into "prod" and "dev". Prior to discussing each of the four directories, let me discuss prod and dev in Zeta. 
