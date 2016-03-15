@@ -29,4 +29,7 @@ echo ""
 echo "Install marathon-lb for load balancing/service discovery"
 echo "$INSTALLER zeta_inst_marathon-lb.tgz"
 echo ""
+echo "Install chronos for cluster wide cron"
+echo "$INSTALLER zeta_inst_chronos.tgz"
+echo ""
 

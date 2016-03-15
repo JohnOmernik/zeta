@@ -2,6 +2,10 @@
 
 CLUSTERNAME=$(ls /mapr)
 
+MESOS_ROLE="prod"
+
+. /mapr/${CLUSTERNAME}/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
+
 INST_FILE="/mapr/$CLUSTERNAME/user/zetaadm/6_install_mesos_dep.sh"
 
 cat > $INST_FILE << EOL

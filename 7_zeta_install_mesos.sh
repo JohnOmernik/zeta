@@ -1,6 +1,12 @@
 #!/bin/bash
 
+
 CLUSTERNAME=$(ls /mapr)
+
+MESOS_ROLE="prod"
+
+. /mapr/${CLUSTERNAME}/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
+
 . /mapr/$CLUSTERNAME/user/zetaadm/cluster.conf
 
 INST_FILE="/mapr/$CLUSTERNAME/user/zetaadm/7_install_mesos.sh"
