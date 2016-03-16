@@ -1,9 +1,5 @@
 #!/bin/bash
 
-
-#exit 1
-
-
 MESOS_ROLE="prod"
 
 CLUSTERNAME=$(ls /mapr)
@@ -35,6 +31,9 @@ export ZETA_KAFKA_API_PORT="21000"
 EOL1
 
 . /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP_ID}.sh 
+
+cp initial_broker_setup.sh ${INST_DIR}/${APP_ID}/
+
 
 cd $INST_DIR
 
@@ -102,4 +101,8 @@ echo ""
 /home/zetaadm/zetaadmin/marathon${MESOS_ROLE}_submit.sh ${INST_DIR}/${APP_ID}/${APP_ID}.marathon
 echo ""
 echo ""
-echo "Kafka Installed: Please go to ${INST_DIR}/${APP_ID} and run initial_startup.sh to configure actual Kafka Brokers"
+
+echo "Kafka Installed: Please go to ${INST_DIR}/${APP_ID} and run initial_broker_setup.sh  to configure actual Kafka Brokers"
+echo ""
+echo "> cd ${INST_DIR}/${APP_ID}"
+echo "> ./initial_broker_setup.sh"
