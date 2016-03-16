@@ -172,6 +172,10 @@ sudo cp ./9_zeta_install_examples.sh /home/zetaadm/
 sudo chown zetaadm:zetaadm /home/zetaadm/9_zeta_install_examples.sh
 sudo chmod +x /home/zetaadm/9_zeta_install_examples.sh
 
+sudo cp ./10_zeta_describe_env.sh /home/zetaadm/
+sudo chown zetaadm:zetaadm /home/zetaadm/10_zeta_describe_env.sh
+sudo chmod +x /home/zetaadm/10_zeta_describe_env.sh
+
 
 
 

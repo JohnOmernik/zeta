@@ -71,6 +71,7 @@ $SCPCMD zeta_packages.tgz ${SSHHOST}:/home/${IUSER}/
 $SCPCMD 2_zeta_base.sh ${SSHHOST}:/home/${IUSER}/
 $SCPCMD 8_zeta_start_mesos.sh ${SSHHOST}:/home/${IUSER}/
 $SCPCMD 9_zeta_install_examples.sh ${SSHHOST}:/home/${IUSER}/
+$SCPCMD 10_zeta_describe_env.sh ${SSHHOST}:/home/${IUSER}/
 # Copy other defined scripts
 $SCPCMD $ZETA_LAYOUT ${SSHHOST}:/home/${IUSER}/
 $SCPCMD $ZETA_PACKAGER ${SSHHOST}:/home/${IUSER}/

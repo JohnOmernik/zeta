@@ -8,7 +8,7 @@ This Repo includes scripts for running Zeta Architecure. The design goals will b
 
 First you need to have a running MapR cluster based on the Marketplace AMIs. This needs to be M5 or M7.  Once you have a running cluster proceed to Zeta Steps:
 
-1. Copy cluster.conf.template to cluster.conf
+1. Copy cluster.conf.default to cluster.conf
 2. Edit settings in cluster.conf based on the settings you used in your AWS cluster. (Update the IP address to connect to, the key to connect to a node, the cluster name, passwords for Mesos Roles etc)
 3. Run 1_aws_prep_zeta.sh - It will give you instructions for the next step which will be... 
 4. Log on to node and run 2_zeta_base.sh as ec2-user When this is finished, it will instruct you to
