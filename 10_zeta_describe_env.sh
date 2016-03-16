@@ -1,4 +1,4 @@
-#!/bin/bin
+#!/bin/bash
 
 CLUSTERNAME=$(ls /mapr)
 MESOS_ROLE="prod"
@@ -22,7 +22,7 @@ echo "MESOS_ROLE=\"prod\" # You do have to indicate the mesos role, everything i
 echo "./mapr/\${CLUSTERNAME}/mesos/kstore/env/zeta_\${CLUSTERNAME}_\${MESOS_ROLE}.sh"
 echo ""
 echo ""
-echo "In other langages such as python, you can run the env script and pass 1 as it's only argument. This will echo out all the variables in KEY=VALUE format for easy splitting and use in your script"
+echo "In other langauges such as python, you can run the env script and pass 1 as it's only argument. This will echo out all the variables in KEY=VALUE format for easy splitting and use in your script"
 echo ""
 echo "To add more variables, please use the subdirectory under where the env script is located for your mesos role (env_prod for prod, env_dev for dev etc)"
 echo "Create a script (.sh) file where you export your variables.  This entire directory will be sourced by the main the script. "

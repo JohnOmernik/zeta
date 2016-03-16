@@ -335,8 +335,10 @@ export ZETA_CHRONOS_HOST="\${ZETA_CHRONOS_ENV}.\${ZETA_MARATHON_ENV}.\${ZETA_MES
 export ZETA_CHRONOS_PORT="20180"
 # END GLOBAL ENV VARIABLES
 
-# Source env_pro
-. /mapr/$CLUSTERNAME/mesos/kstore/env/env_prod/*
+# Source env_prod
+for SRC in /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/*.sh; do
+   . \$SRC
+done
 
 if [ "\$1" == "1" ]; then
     env|grep -P "^ZETA_"
