@@ -87,7 +87,7 @@ fi
 #Run through Nodes slowly to restart warden
 echo "Restarting Warden on all nodes - Please be patient - This process takes time and is required"
 
-NODES=`cat "./nodes.list`
+NODES=`cat ./nodes.list`
 for NODE in $NODES ; do
    echo "Restarting Warden on $NODE"
    ssh $NODE "sudo service mapr-warden restart"
