@@ -114,10 +114,22 @@ read PASS2
 echo ""
 stty echo
 
-if [ "$PASS1" != "$PASS2" ]; then
-    echo "Passwords do not match exiting"
-    exit 1
-fi
+
+while [ "$PASS1" != "$PASS2" ]
+do
+    echo "Passwords for zetaadm do not match, please try again"
+    echo ""
+    stty -echo
+    printf "Please enter the zetaadm Password: "
+    read PASS1
+    echo ""
+
+    printf "Please Renter the zetaadm Password: "
+    read PASS2
+    echo ""
+    stty echo
+done
+echo ""
 
 ####################
 SCRIPT="/mapr/$CLUSTERNAME/user/$USER/add_zeta_adm.sh"
