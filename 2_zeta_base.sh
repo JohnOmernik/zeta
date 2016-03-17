@@ -74,11 +74,6 @@ NET="$O1.$O2.$O3.0\/24"
 #copy the env.sh.bak to the env.sh
 ./runcmd.sh "sudo cp /opt/mapr/conf/env.sh.bak /opt/mapr/conf/env.sh"
 
-
-
-
-
-
 ####################
 echo "Checking and Creating ec2-user MapR Home Volume if needed"
 if [ ! -d "/mapr/$CLUSTERNAME/user/ec2-user" ]; then
@@ -90,13 +85,14 @@ if [ ! -d "/mapr/$CLUSTERNAME/user/ec2-user" ]; then
 fi
 ####################
 #Run through Nodes slowly to restart warden
-echo "Restarting Warden on all nodes"
-while read -r node
-do
-    echo "Restarting Warden on $node"
-    ssh -t $node "sudo service mapr-warden restart"
-    sleep 15
-done < "./nodes.list"
+echo "Restarting Warden on all nodes - Please be patient - This process takes time and is required"
+
+NODES=`cat "./nodes.list`
+for NODE in $NODES ; do
+   echo "Restarting Warden on $NODE"
+   ssh $NODE "sudo service mapr-warden restart"
+   sleep 10
+done
 
 
 ####################
