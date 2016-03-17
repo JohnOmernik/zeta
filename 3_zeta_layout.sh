@@ -1,6 +1,7 @@
 #!/bin/bash
 
 CLUSTERNAME=$(ls /mapr)
+MESOS_ROLE="prod"
 
 # RUN THIS SCRIPT AS zetaadm
 if [[ $EUID -ne 2500 ]]; then
