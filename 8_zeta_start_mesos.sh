@@ -14,7 +14,7 @@ echo "Mesos should be started now."
 echo "To access the Mesos UI, you will need to either open ports in your firewall (or Cloud Provider Security Template) or connect to edge proxy using SSH Socks Forwarding. "
 echo "To use the Socks forwarding, open another ssh connection from your client machine (outside the cluster) as such:"
 echo ""
-echo "> ssh -i ${PRVKEY} -D8091 ${IUSER}@${IHOST}
+echo "> ssh -i ${PRVKEY} -D8091 ${IUSER}@${IHOST}"
 echo ""
 echo "Note -D8091, in this case we are using port 8091 as the localhost proxy to the cluster."
 echo "Then in your webbrowser (say Firefox) go to proxy settings and set a Socks V5 Proxy to be localhost:8091.  In Firefox there is an option to use local DNS. Check that"
