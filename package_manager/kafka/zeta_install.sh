@@ -33,7 +33,7 @@ EOL1
 . /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP_ID}.sh 
 
 cp initial_broker_setup.sh ${INST_DIR}/${APP_ID}/
-
+chmod +x ${INST_DIR}/${APP_ID}/initial_broker_setup.sh
 
 cd $INST_DIR
 
