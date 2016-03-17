@@ -40,8 +40,8 @@ NUM_NODES=$(echo $ZETA_MESOS_AGENTS|tr " " "\n"|wc -l)
 cat > $INST_DIR/marathon-lb.marathon << EOL
 {
   "id": "marathon-lb",
-  "cpus": 0.5,
-  "mem": 512,
+  "cpus": 1,
+  "mem": 768,
   "instances": ${NUM_NODES},
   "args":["sse", "--marathon", "http://${ZETA_MARATHON_HOST}:${ZETA_MARATHON_PORT}", "--marathon-auth-credential-file", "/marathon-lb/creds/marathon.txt", "--group", "*"],
   "constraints": [["hostname", "UNIQUE"]],

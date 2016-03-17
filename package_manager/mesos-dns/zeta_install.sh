@@ -95,7 +95,7 @@ echo ""
 /home/zetaadm/zetaadmin/marathonprod_submit.sh $INST_DIR/mesos-dns.marathon ${MAR_HOST}
 echo ""
 echo ""
-sleep 2
+sleep 5
 echo "Updating resolve.conf This won't survive reboot. This is fragile make stronger for production"
 echo ""
 /home/zetaadm/zetaadmin/run_cmd.sh "sudo sed -i -r 's/nameserver $RESOLVER/nameserver $IP/' /etc/resolv.conf"

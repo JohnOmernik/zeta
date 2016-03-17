@@ -53,6 +53,7 @@ cat > $INST_DIR/${ZETA_DOCKER_REG_ID}.marathon << EOF
  "labels": {
    "PRODUCTION_READY":"True", "CONTAINERIZER":"Docker", "ZETAENV":"Prod"
   },
+  "ports": [],
   "container": {
     "type": "DOCKER",
     "docker": {

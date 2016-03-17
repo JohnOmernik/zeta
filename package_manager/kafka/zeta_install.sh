@@ -55,16 +55,17 @@ wget https://archive.apache.org/dist/kafka/0.9.0.1/kafka_2.10-0.9.0.1.tgz
 
 tar zcf kafka-mesos-${KAFKA_MESOS_VER}.tgz ./*
 
+tar zxf kafka_2.10-0.9.0.1.tgz
+
 cat > /mapr/$CLUSTERNAME/mesos/${MESOS_ROLE}/kafka/${ZETA_KAFKA_ENV}/kafka-mesos.properties << EOF
-# Scheduler options defaults. See `./kafka-mesos.sh help scheduler` for more details
+# Scheduler options defaults. See ./kafka-mesos.sh help scheduler for more details
 debug=false
 
 framework-name=${ZETA_KAFKA_ENV}
 
-storage=zk:/kafka-mesos
-
-
 master=zk://${ZETA_MESOS_ZK}
+
+storage=zk:/kafka-mesos
 
 # Need the /kafkaprod as the chroot for zk
 zk=${ZETA_KAFKA_ZK}
@@ -84,7 +85,7 @@ cat > /mapr/$CLUSTERNAME/mesos/${MESOS_ROLE}/kafka/${ZETA_KAFKA_ENV}/${ZETA_KAFK
 "instances": 1,
 "cmd": "./kafka-mesos.sh scheduler /mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/kafka/${ZETA_KAFKA_ENV}/kafka-mesos.properties",
 "cpus": 1,
-"mem": 256,
+"mem": 768,
 "ports":[],
 "labels": {
     "PRODUCTION_READY":"True",
