@@ -13,7 +13,7 @@ if [ ! -d "$PKG_DIR" ]; then
 fi
 
 
-for D in `find . -type d -maxdepth 1`
+for D in `find . -maxdepth 1 -type d`
 do
     if [ "$D" != "." ]; then
         if [ "$D" != "$PKG_DIR" ]; then
