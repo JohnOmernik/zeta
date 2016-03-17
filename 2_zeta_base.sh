@@ -2,6 +2,8 @@
 
 . ./cluster.conf
 
+CLUSTERNAME=$(ls /mapr)
+
 ####################
 # Steps Needed Broken up into Steps vs. Push button Zeta steps
 # 1. Install nano ... don't judge
@@ -81,6 +83,7 @@ NET="$O1.$O2.$O3.0\/24"
 echo "Checking and Creating ec2-user MapR Home Volume if needed"
 if [ ! -d "/mapr/$CLUSTERNAME/user/ec2-user" ]; then
     sudo maprcli volume create -name ec2-user_home -path /user/ec2-user -rootdirperms 775 -user ec2-user:fc,a,dump,restore,m,d
+    sleep 5
     sudo chown ec2-user /mapr/$CLUSTERNAME/user/ec2-user
     sudo chmod 755 /mapr/$CLUSTERNAME/user/ec2-user
     sleep 2

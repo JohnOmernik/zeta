@@ -2,9 +2,9 @@
 
 
 MESOS_ROLE="prod"
+. ./cluster.conf
 CLUSTERNAME=$(ls /mapr)
 . /mapr/${CLUSTERNAME}/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
-. ./cluster.conf
 cd /home/zetaadm/zetaadmin
 ./startmesos.sh 1
 

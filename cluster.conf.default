@@ -20,10 +20,6 @@ IUSER="ec2-user"
 PRVKEY="./yourkey.pem"
 
 #########################
-# CLUSTERNAME is the MapR Clustername.
-CLUSTERNAME="awsmk"
-
-#########################
 # ZETA is the name of the script to run after the initial zeta work is done. This may be different for different orgs.
 ZETA_LAYOUT="3_zeta_layout.sh"
 ZETA_PACKAGER="4_zeta_packager.sh"

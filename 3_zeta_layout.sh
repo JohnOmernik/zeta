@@ -1,5 +1,6 @@
 #!/bin/bash
 
+CLUSTERNAME=$(ls /mapr)
 
 # RUN THIS SCRIPT AS zetaadm
 if [[ $EUID -ne 2500 ]]; then
