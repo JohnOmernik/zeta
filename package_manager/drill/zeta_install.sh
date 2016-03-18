@@ -1,7 +1,5 @@
 #!/bin/bash
 
-echo "This package is not ready for install. Exiting... "
-exit 1
 
 MESOS_ROLE="prod"
 
@@ -19,18 +17,15 @@ if [ -d "$INST_DIR" ]; then
     exit 1
 fi
 echo "Making Directories for Drill"
-mkdir -p $INST_DIR
+mkdir -p ${INST_DIR}
+cp -R ./libjpam ${INST_DIR}/
+mkdir -p ${INST_DIR}/extrajars
+echo "Place extra jars in this folder including storage plugin jars, or udf jars" > ${INST_DIR}/extrajars/README.txt
+mkdir -p ${INST_DIR}/drill_packages
+cp get_drill_release.sh ${INST_DIR}/
+cp install_drill_instance.sh ${INST_DIR}/
 
-APP_ID="drillprod"
-
-cat > /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP_ID}.sh << EOL1
-#!/bin/bash
-export ZETA_DRILL_ENV="${APP_IP}"
-export ZETA_DRILL_WEB_HOST="\${ZETA_DRILL_ENV}.\${ZETA_MARATHON_ENV}.\${ZETA_MESOS_DOMAIN}"
-export ZETA_DRILL_WEB_PORT="20000"
-export ZETA_DRILL_USER_PORT="20001"
-export ZETA_DRILL_BIT_PORT="20002"
-EOL1
-
+chmod +x ${INST_DIR}/get_drill_release.sh
+chmod +x ${INST_DIR}/install_drill_instance.sh
 
 

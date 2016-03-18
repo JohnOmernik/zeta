@@ -11,6 +11,7 @@ cd "$(dirname "$0")"
 . /mapr/$CLUSTERNAME/mesos/kstore/$MESOS_ROLE/secret/credential.sh
 
 APP_ID="kafkaprod"
+APP_PORT="21000"
 INST_DIR="/mapr/$CLUSTERNAME/mesos/$MESOS_ROLE/kafka"
 
 if [ -d "$INST_DIR" ]; then
@@ -23,14 +24,14 @@ mkdir -p ${INST_DIR}
 mkdir -p ${INST_DIR}/${APP_ID}
 
 
-cat > /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP_ID}.sh << EOL1
+cat > /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/kafka_${APP_ID}.sh << EOL1
 #!/bin/bash
-export ZETA_KAFKA_ENV="${APP_ID}"
-export ZETA_KAFKA_ZK="\${ZETA_ZK}/\${ZETA_KAFKA_ENV}"
-export ZETA_KAFKA_API_PORT="21000"
+export ZETA_KAFKA_${APP_ID}_ENV="${APP_ID}"
+export ZETA_KAFKA_${APP_ID}_ZK="\${ZETA_ZK}/${APP_ID}"
+export ZETA_KAFKA_${APP_ID}_API_PORT="${APP_PORT}"
 EOL1
 
-. /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP_ID}.sh 
+. /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/kafka_${APP_ID}.sh 
 
 cp initial_broker_setup.sh ${INST_DIR}/${APP_ID}/
 chmod +x ${INST_DIR}/${APP_ID}/initial_broker_setup.sh
@@ -57,21 +58,21 @@ tar zcf kafka-mesos-${KAFKA_MESOS_VER}.tgz ./*
 
 tar zxf kafka_2.10-0.9.0.1.tgz
 
-cat > /mapr/$CLUSTERNAME/mesos/${MESOS_ROLE}/kafka/${ZETA_KAFKA_ENV}/kafka-mesos.properties << EOF
+cat > /mapr/$CLUSTERNAME/mesos/${MESOS_ROLE}/kafka/${APP_ID}/kafka-mesos.properties << EOF
 # Scheduler options defaults. See ./kafka-mesos.sh help scheduler for more details
 debug=false
 
-framework-name=${ZETA_KAFKA_ENV}
+framework-name=${APP_ID}
 
 master=zk://${ZETA_MESOS_ZK}
 
 storage=zk:/kafka-mesos
 
 # Need the /kafkaprod as the chroot for zk
-zk=${ZETA_KAFKA_ZK}
+zk=${ZETA_ZK}/${APP_ID}
 
 # Need different port for each framework
-api=http://${ZETA_KAFKA_ENV}.${ZETA_MARATHON_ENV}.${ZETA_MESOS_DOMAIN}:${ZETA_KAFKA_API_PORT}
+api=http://${APP_ID}.${ZETA_MARATHON_ENV}.${ZETA_MESOS_DOMAIN}:${APP_PORT}
 
 principal=${ROLE_PRIN}
 
@@ -79,20 +80,20 @@ secret=${ROLE_PASS}
 
 EOF
 
-cat > /mapr/$CLUSTERNAME/mesos/${MESOS_ROLE}/kafka/${ZETA_KAFKA_ENV}/${ZETA_KAFKA_ENV}.marathon << EOF2
+cat > /mapr/$CLUSTERNAME/mesos/${MESOS_ROLE}/kafka/${APP_ID}/${APP_ID}.marathon << EOF2
 {
-"id": "${ZETA_KAFKA_ENV}",
+"id": "${APP_ID}",
 "instances": 1,
-"cmd": "./kafka-mesos.sh scheduler /mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/kafka/${ZETA_KAFKA_ENV}/kafka-mesos.properties",
+"cmd": "./kafka-mesos.sh scheduler /mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/kafka/${APP_ID}/kafka-mesos.properties",
 "cpus": 1,
 "mem": 768,
-"ports":[],
+"ports":[${APP_PORT}],
 "labels": {
     "PRODUCTION_READY":"True",
     "ZETAENV":"Prod",
     "CONTAINERIZER":"Mesos"
 },
-"uris": ["file:///mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/kafka/${ZETA_KAFKA_ENV}/kafka-mesos-${KAFKA_MESOS_VER}.tgz"]
+"uris": ["file:///mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/kafka/${APP_ID}/kafka-mesos-${KAFKA_MESOS_VER}.tgz"]
 }
 
 EOF2
