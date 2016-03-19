@@ -13,9 +13,9 @@ MASTERPORT="$ZETA_MESOS_LEADER_PORT"
 ZKSTR="zk://$ZETA_MESOS_ZK"
 
 
-MASTER_OPS="--cluster=$CLUSTERNAME --roles=prod,dev --quorum=2 --authenticate --authenticate_slaves --credentials=/mapr/$CLUSTERNAME/mesos/kstore/mesosconf/secrets/allcredentials.json --acls=/mapr/$CLUSTERNAME/mesos/kstore/mesosconf/mesos_acls.json"
+MASTER_OPS="--cluster=$CLUSTERNAME --roles=prod,dev --quorum=2 --authenticate --authenticate_slaves --credentials=file:///mapr/$CLUSTERNAME/mesos/kstore/mesosconf/secrets/allcredentials.json --acls=file:///mapr/$CLUSTERNAME/mesos/kstore/mesosconf/mesos_acls.json"
 
-AGENT_OPS="--gc_delay=600mins --disk_watch_interval=60secs --executor_registration_timeout=3mins --credential=/mapr/$CLUSTERNAME/mesos/kstore/agents/credential.json"
+AGENT_OPS="--gc_delay=600mins --disk_watch_interval=60secs --executor_registration_timeout=3mins --credential=file:///mapr/$CLUSTERNAME/mesos/kstore/agents/credential.json"
 
 EXE_RUN="sudo /usr/sbin/mesos-daemon.sh"
 

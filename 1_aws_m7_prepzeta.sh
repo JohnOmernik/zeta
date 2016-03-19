@@ -9,9 +9,9 @@ cd "$(dirname "$0")"
 # Get a node list from the connecting node, save it to nodes.list
 # Run the Package Manager for a clean copy of packages
 # Upload the private key to the node
-# Upload the runcmd.sh, nodes.list, and cluster.conf files to the cluster
-# Upload the numbered scripts to the cluster
+# Upload the runcmd.sh, nodes.list, and cluster.conf, install_scripts.list files to the cluster
 # Upload zeta_packages.tgz to the cluster
+# Upload the numbered scripts to the cluster
 # Provide instructions on the next step
 
 
@@ -59,35 +59,31 @@ cd package_manager
 ./package_tgzs.sh
 cd ..
 
-
 #####################
 # Copy private key
 $SCPCMD ${PRVKEY} ${SSHHOST}:/home/${IUSER}/.ssh/id_rsa
 # Copy next step scripts and helpers
 $SCPCMD runcmd.sh ${SSHHOST}:/home/${IUSER}/
 $SCPCMD nodes.list ${SSHHOST}:/home/${IUSER}/
+$SCPCMD install_scripts.list ${SSHHOST}:/home/${IUSER}/
 $SCPCMD cluster.conf ${SSHHOST}:/home/${IUSER}/
 $SCPCMD zeta_packages.tgz ${SSHHOST}:/home/${IUSER}/
-$SCPCMD 2_zeta_base.sh ${SSHHOST}:/home/${IUSER}/
-$SCPCMD 8_zeta_start_mesos.sh ${SSHHOST}:/home/${IUSER}/
-$SCPCMD 9_zeta_install_examples.sh ${SSHHOST}:/home/${IUSER}/
-$SCPCMD 10_zeta_describe_env.sh ${SSHHOST}:/home/${IUSER}/
-# Copy other defined scripts
-$SCPCMD $ZETA_LAYOUT ${SSHHOST}:/home/${IUSER}/
-$SCPCMD $ZETA_PACKAGER ${SSHHOST}:/home/${IUSER}/
-$SCPCMD $ZETA_DOCKER ${SSHHOST}:/home/${IUSER}/
-$SCPCMD $ZETA_PREP_MESOS ${SSHHOST}:/home/${IUSER}/
-$SCPCMD $ZETA_INSTALL_MESOS ${SSHHOST}:/home/${IUSER}/
+$SCPCMD 2_zeta_user_prep.sh ${SSHHOST}:/home/${IUSER}/
+
+SCRIPTS=`cat ./install_scripts.list`
+for SCRIPT in $SCRIPTS ; do
+    $SCPCMD $SCRIPT ${SSHHOST}:/home/${IUSER}/
+done
 
 $SSHCMD "chmod +x runcmd.sh"
-$SSHCMD "chmod +x 2_zeta_base.sh"
+$SSHCMD "chmod +x 2_zeta_user_prep.sh"
 
 echo "Cluster Scripts have been prepped."
-echo "Log into cluster node and execute initial script"
+echo "Log into cluster node and execute user prep script"
 echo ""
 echo "Login to initial node:"
 echo "> ssh -i ${PRVKEY} $SSHHOST"
 echo ""
 echo "Initiate next step:"
-echo "> ./2_zeta_base.sh"
+echo "> ./2_zeta_user_prep.sh"
 

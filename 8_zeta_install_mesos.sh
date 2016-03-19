@@ -9,7 +9,7 @@ MESOS_ROLE="prod"
 
 . /mapr/$CLUSTERNAME/user/zetaadm/cluster.conf
 
-INST_FILE="/mapr/$CLUSTERNAME/user/zetaadm/7_install_mesos.sh"
+INST_FILE="/mapr/$CLUSTERNAME/user/zetaadm/cluster_inst/zeta_install_mesos.sh"
 
 cat > $INST_FILE << EOL
 #!/bin/bash
@@ -30,7 +30,6 @@ chmod +x $INST_FILE
 /home/zetaadm/zetaadmin/run_cmd_no_return.sh "$INST_FILE"
 
 
-
 NUM_NODES=$(echo "$ZETA_NODES"|tr " " "\n"|wc -l)
 
 NUM_INST=$(/home/zetaadm/zetaadmin/run_cmd.sh "mesos 2>&1"|grep "Available commands"|wc -l)
@@ -42,5 +41,7 @@ NUM_INST=$(/home/zetaadm/zetaadmin/run_cmd.sh "mesos 2>&1"|grep "Available comma
 sleep 5
 done
 
-
+echo ""
+echo ""
 echo "Mesos Installed Successfully"
+echo "Now Start Mesos"

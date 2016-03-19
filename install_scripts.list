@@ -1,0 +1,9 @@
+3_zeta_layout.sh
+4_zeta_install_role.sh 
+5_zeta_node_prep.sh
+6_zeta_install_docker.sh
+7_zeta_install_mesos_prereq.sh
+8_zeta_install_mesos.sh
+9_zeta_start_mesos.sh
+10_zeta_install_examples.sh
+11_zeta_describe_env.sh

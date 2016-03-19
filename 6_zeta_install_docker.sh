@@ -6,7 +6,7 @@ MESOS_ROLE="prod"
 
 . /mapr/${CLUSTERNAME}/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
 
-INST_FILE="/mapr/$CLUSTERNAME/user/zetaadm/5_install_docker.sh"
+INST_FILE="/mapr/$CLUSTERNAME/user/zetaadm/cluster_inst/zeta_install_docker.sh"
 
 cat > $INST_FILE << EOL
 #!/bin/bash
@@ -48,9 +48,10 @@ done
 
 
 
-
+echo ""
+echo ""
 echo "Docker Installed on all nodes"
-
+echo "Now install Mesos Prereqs"
 
 
 

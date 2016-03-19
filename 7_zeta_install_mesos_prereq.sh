@@ -6,7 +6,7 @@ MESOS_ROLE="prod"
 
 . /mapr/${CLUSTERNAME}/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
 
-INST_FILE="/mapr/$CLUSTERNAME/user/zetaadm/6_install_mesos_dep.sh"
+INST_FILE="/mapr/$CLUSTERNAME/user/zetaadm/cluster_inst/zeta_install_mesos_prereq.sh"
 
 cat > $INST_FILE << EOL
 # Install a few utility tools
@@ -53,7 +53,9 @@ NUM_INST=$(/home/zetaadm/zetaadmin/run_cmd.sh "mvn -version 2>&1"|grep "Maven ho
 sleep 5
 done
 
+echo ""
+echo ""
 echo "Mesos Prereqs installed"
-
+echo "Now install Mesos"
 
 

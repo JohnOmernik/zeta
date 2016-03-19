@@ -1,0 +1,15 @@
+{
+  "permissive": false,
+  "register_frameworks": [
+    { "principals": { "values": ["zetadevcontrol"] }, "roles": { "values": ["dev"] } },
+    { "principals": { "values": ["zetaprodcontrol"] }, "roles": { "type": "ANY" }}
+  ],
+  "run_tasks": [
+    { "principals": { "values": ["zetadevcontrol"] }, "users": { "values": ["svcdevdata"]} },
+    { "principals": { "values": ["zetaprodcontrol"] }, "users": { "type": "ANY"}}
+  ]
+  "shutdown_frameworks": [
+    { "principals": { "values": ["zetadevcontrol"] },"framework_principals": { "values": "zetadevcontrol" } },
+    { "principals": { "values": ["zetaprodcontrol"] },"framework_principals": { "type": "ANY" }}
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "credentials": [
+    {"principal": "fun","secret": "good"},
+    {"principal": "fun","secret": "good"},
+    {"principal": "fun","secret": "good"},
+    {"principal": "fun","secret": "good"},
+    {"principal": "fun","secret": "good"},
+    {"principal": "skinner","secret": "code"}
+  ]
+}

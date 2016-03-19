@@ -15,6 +15,9 @@ cd "$(dirname "$0")"
 
 . ./cluster.conf
 
+# Get the Zookeepers from the warden.conf file
+ZK_SPEC=$(cat /opt/mapr/conf/warden.conf|grep zookeeper\.servers|sed "s/zookeeper\.servers=//g")
+
 ####################
 # 1. Check to run the script as 2500
 # 2. cd to the location the script is (should be /home/zetaadm)
@@ -25,14 +28,10 @@ cd "$(dirname "$0")"
 # 7. Setup kstore directories and basic configuration for Mesos
 
 
-# Get the Zookeepers from the warden.conf file
-ZK_SPEC=$(cat /opt/mapr/conf/warden.conf|grep zookeeper\.servers|sed "s/zookeeper\.servers=//g")
+# This script needs work to separate out the role creation from the layout to support roles
+# Right now it assumes a prod rule is needed, creates that
+# and also makes some basic example directories for dev roles but doesn't complete the role creation
 
-# This is the ENV File for the cluster. 
-ZETA_ENV_FILE="/mapr/${CLUSTERNAME}/mesos/kstore/env/zeta_${CLUSTERNAME}_prod.sh"
-
-
-####################
 ####### Work to Clean up Default Volumes:
 echo "Removing Default Volumes: Errors here about No such file or Directory are ok"
 sudo maprcli volume remove -name tables_vol
@@ -44,36 +43,19 @@ sudo rm -rf /mapr/$CLUSTERNAME/apps
 
 ##############################################################################
 echo "Adding Zeta Groups to all nodes"
+# This assumes no groups/roles have been installed because this is an initial setup
+# It creates the dev groups, but doesn't finish the role
+# In reality role creation (thus role group creation)
+# Should occur in a N role creation script
+# However, more thought needs to be put into it. For now, it's a skeleton
+
 # Specific Zeta Setup
 ./runcmd.sh "sudo groupadd --gid 2501 zetausers"
-./runcmd.sh "sudo groupadd --gid 2502 zetaproddata"
-./runcmd.sh "sudo groupadd --gid 2503 zetadevdata"
-./runcmd.sh "sudo groupadd --gid 2504 zetaprodmesos"
-./runcmd.sh "sudo groupadd --gid 2505 zetadevmesos"
-./runcmd.sh "sudo groupadd --gid 2506 zetaprodapps"
-./runcmd.sh "sudo groupadd --gid 2507 zetadevapps"
-./runcmd.sh "sudo groupadd --gid 2508 zetaprodetl"
-./runcmd.sh "sudo groupadd --gid 2509 zetadevetl"
+
 
 echo "Adding mapr and zetaadm to all zeta groups on all nodes"
 ./runcmd.sh "sudo usermod -a -G zetausers mapr"
 ./runcmd.sh "sudo usermod -a -G zetausers zetaadm"
-./runcmd.sh "sudo usermod -a -G zetaproddata mapr"
-./runcmd.sh "sudo usermod -a -G zetaproddata zetaadm"
-./runcmd.sh "sudo usermod -a -G zetadevdata mapr"
-./runcmd.sh "sudo usermod -a -G zetadevdata zetaadm"
-./runcmd.sh "sudo usermod -a -G zetaprodmesos mapr"
-./runcmd.sh "sudo usermod -a -G zetaprodmesos zetaadm"
-./runcmd.sh "sudo usermod -a -G zetadevmesos mapr"
-./runcmd.sh "sudo usermod -a -G zetadevmesos zetaadm"
-./runcmd.sh "sudo usermod -a -G zetaprodapps mapr"
-./runcmd.sh "sudo usermod -a -G zetaprodapps zetaadm"
-./runcmd.sh "sudo usermod -a -G zetadevapps mapr"
-./runcmd.sh "sudo usermod -a -G zetadevapps zetaadm"
-./runcmd.sh "sudo usermod -a -G zetaprodetl mapr"
-./runcmd.sh "sudo usermod -a -G zetaprodetl zetaadm"
-./runcmd.sh "sudo usermod -a -G zetadevetl mapr"
-./runcmd.sh "sudo usermod -a -G zetadevetl zetaadm"
 
 
 #Directory Setup
@@ -82,79 +64,29 @@ echo "Adding mapr and zetaadm to all zeta groups on all nodes"
 # The apps directory contains non-cluster services. Think specific apps for your org. A webserver, a dashboard. These may be developed outside, but are serving a business purpose, not a cluster based (admin, frameworks etc) purpose. 
 # Webservrs, scrapers, etc
 
-echo "Creating apps directory, and prod/dev roles within"
+echo "Creating apps directory"
 sudo mkdir -p /mapr/$CLUSTERNAME/apps
 sudo chown zetaadm:zetausers /mapr/$CLUSTERNAME/apps
 sudo chmod 750 /mapr/$CLUSTERNAME/apps
-
-VOL="appsdev"
-MNT="/apps/dev"
-GRP="zetadevapps"
-
-sudo maprcli volume create -name $VOL -path $MNT -rootdirperms 775 -user zetaadm:fc,a,dump,restore,m,d 
-sudo chmod 775 /mapr/${CLUSTERNAME}$MNT
-sudo chown zetaadm:$GRP /mapr/${CLUSTERNAME}$MNT
-
-VOL="appsprod"
-MNT="/apps/prod"
-GRP="zetaprodapps"
-
-sudo maprcli volume create -name $VOL -path $MNT -rootdirperms 775 -user zetaadm:fc,a,dump,restore,m,d 
-sudo chmod 775 /mapr/${CLUSTERNAME}$MNT
-sudo chown zetaadm:$GRP /mapr/${CLUSTERNAME}$MNT
-
-
 
 ################################
 # Create Mesos Directory
 # The Mesos directory in Zeta is used to house cluster services. These are services that may serve many purposes in your cluster, and also serve many users and applications.
 # Examples include, Apache Drill, Docker Registery, Apache Kafka, Apache Spark, UIs for these services, etc. 
 
-echo "Creating mesos directory and prod/dev roles within"
+echo "Creating mesos directory"
 sudo mkdir -p /mapr/$CLUSTERNAME/mesos
 sudo chown zetaadm:zetausers /mapr/$CLUSTERNAME/mesos
 sudo chmod 750 /mapr/$CLUSTERNAME/mesos
-
-VOL="mesosdev"
-MNT="/mesos/dev"
-GRP="zetadevmesos"
-
-sudo maprcli volume create -name $VOL -path $MNT -rootdirperms 775 -user zetaadm:fc,a,dump,restore,m,d 
-sudo chmod 775 /mapr/${CLUSTERNAME}$MNT
-sudo chown zetaadm:$GRP /mapr/${CLUSTERNAME}$MNT
-
-VOL="mesosprod"
-MNT="/mesos/prod"
-GRP="zetaprodmesos"
-
-sudo maprcli volume create -name $VOL -path $MNT -rootdirperms 775 -user zetaadm:fc,a,dump,restore,m,d 
-sudo chmod 775 /mapr/${CLUSTERNAME}$MNT
-sudo chown zetaadm:$GRP /mapr/${CLUSTERNAME}$MNT
 
 ################################
 # Create etl Directory
 # The etl directory is used for data jobs running on your cluster. These are like little applications, but serve a purpose specific to loading of data.  
 # 
-echo "Creating etl directory and prod/dev roles within"
+echo "Creating etl directory"
 sudo mkdir -p /mapr/$CLUSTERNAME/etl
 sudo chown zetaadm:zetausers /mapr/$CLUSTERNAME/etl
 sudo chmod 750 /mapr/$CLUSTERNAME/etl
-
-VOL="etldev"
-MNT="/etl/dev"
-GRP="zetadevetl"
-
-sudo maprcli volume create -name $VOL -path $MNT -rootdirperms 775 -user zetaadm:fc,a,dump,restore,m,d 
-sudo chmod 775 /mapr/${CLUSTERNAME}$MNT
-sudo chown zetaadm:$GRP /mapr/${CLUSTERNAME}$MNT
-
-VOL="etlprod"
-MNT="/etl/prod"
-GRP="zetaprodetl"
-
-sudo maprcli volume create -name $VOL -path $MNT -rootdirperms 775 -user zetaadm:fc,a,dump,restore,m,d 
-sudo chmod 775 /mapr/${CLUSTERNAME}$MNT
-sudo chown zetaadm:$GRP /mapr/${CLUSTERNAME}$MNT
 
 
 ################################
@@ -164,26 +96,10 @@ sudo chown zetaadm:$GRP /mapr/${CLUSTERNAME}$MNT
 # an example of data that does not belong here would be the data folder for a docker registery. Only the Docker Registery application will access that data, thus it should be stored under the applicaiton itself. 
 # This is also a good place to mount public MapR Tables.  Creating subvolumes here is also encouraged when appropriate. 
 
-echo "Creating data directory and prod/dev roles within"
+echo "Creating data directory"
 sudo mkdir -p /mapr/$CLUSTERNAME/data
 sudo chown zetaadm:zetausers /mapr/$CLUSTERNAME/data
 sudo chmod 750 /mapr/$CLUSTERNAME/data
-
-VOL="datadev"
-MNT="/data/dev"
-GRP="zetadevdata"
-
-sudo maprcli volume create -name $VOL -path $MNT -rootdirperms 775 -user zetaadm:fc,a,dump,restore,m,d 
-sudo chmod 775 /mapr/${CLUSTERNAME}$MNT
-sudo chown zetaadm:$GRP /mapr/${CLUSTERNAME}$MNT
-
-VOL="dataprod"
-MNT="/data/prod"
-GRP="zetaproddata"
-
-sudo maprcli volume create -name $VOL -path $MNT -rootdirperms 775 -user zetaadm:fc,a,dump,restore,m,d 
-sudo chmod 775 /mapr/${CLUSTERNAME}$MNT
-sudo chown zetaadm:$GRP /mapr/${CLUSTERNAME}$MNT
 
 
 #####################################################
@@ -195,42 +111,6 @@ DIR="/mapr/$CLUSTERNAME/mesos/kstore"
 sudo mkdir -p $DIR
 sudo chown zetaadm:zetausers $DIR
 sudo chmod 755 $DIR
-
-
-#########
-# The prod location is for prod frameworks. Secrets in the secret directory, other information in subdirectories per framework 
-
-DIR="/mapr/$CLUSTERNAME/mesos/kstore/prod"
-sudo mkdir -p $DIR
-sudo chown zetaadm:zetaprodmesos $DIR
-sudo chmod 2750 $DIR
-
-DIR="/mapr/$CLUSTERNAME/mesos/kstore/prod/secret"
-sudo mkdir -p $DIR
-sudo chown zetaadm:zetaprodmesos $DIR
-sudo chmod 2750 $DIR
-echo "$MESOS_PROD_PRNCPL $MESOS_PROD_PASS" > $DIR/credential.txt
-
-cat > $DIR/credential.sh << EOF10
-#!/bin/bash
-export ROLE_PRIN="$MESOS_PROD_PRNCPL"
-export ROLE_PASS="$MESOS_PROD_PASS"
-EOF10
-
-
-
-#########
-# The dev location is for dev frameworks. Secrets in the secret directory, other information in subdirectories per framework 
-DIR="/mapr/$CLUSTERNAME/mesos/kstore/dev"
-sudo mkdir -p $DIR
-sudo chown zetaadm:zetadevmesos $DIR
-sudo chmod 2750 $DIR
-
-DIR="/mapr/$CLUSTERNAME/mesos/kstore/dev/secret"
-sudo mkdir -p $DIR
-sudo chown zetaadm:zetaprodmesos $DIR
-sudo chmod 2750 $DIR
-echo "$MESOS_DEV_PRNCPL $MESOS_DEV_PASS" > $DIR/credential.txt
 
 #########
 # mesosconf is used for Mesos startup scripts. This includes acls, ratelimits and other scripts. Secrets is the master of secrets for mesos masters
@@ -248,34 +128,25 @@ sudo chmod 2750 $DIR
 cat > /mapr/$CLUSTERNAME/mesos/kstore/mesosconf/secrets/allcredentials.json << EOL0
 {
   "credentials": [
-    {
-      "principal": "${MESOS_AGENT_USER}","secret": "${MESOS_AGENT_PASS}"
-    },
-    {
-      "principal": "${MESOS_PROD_PRNCPL}","secret": "${MESOS_PROD_PASS}"
-    },
-    {
-      "principal": "${MESOS_DEV_PRNCPL}","secret": "${MESOS_DEV_PASS}"
-    }
+    {"principal": "${MESOS_AGENT_USER}","secret": "${MESOS_AGENT_PASS}"}
   ]
 }
 EOL0
+
 sudo chmod 750 /mapr/$CLUSTERNAME/mesos/kstore/mesosconf/secrets/allcredentials.json
 
+#Prod permissions added due to super user status
 cat > /mapr/$CLUSTERNAME/mesos/kstore/mesosconf/mesos_acls.json << EOL1
 {
   "permissive": false,
   "register_frameworks": [
-    { "principals": { "values": ["zetaprodcontrol"] }, "roles": { "type": "ANY" }},
-    { "principals": { "values": ["zetadevcontrol"] }, "roles": { "values": ["dev"] }}
+    { "principals": { "values": ["zetaprodcontrol"] }, "roles": { "type": "ANY" } }
   ],
   "run_tasks": [
-    { "principals": { "values": ["zetaprodcontrol"] }, "users": { "type": "ANY"}},
-    { "principals": { "values": ["zetadevcontrol"] }, "users": { "values": ["svcdevdata"]}}
+    { "principals": { "values": ["zetaprodcontrol"] }, "users": { "type": "ANY"} }
   ],
   "shutdown_frameworks": [
-    { "principals": { "values": ["zetaprodcontrol"] },"framework_principals": { "type": "ANY" }},
-    { "principals": { "values": ["zetadevcontrol"] },"framework_principals": { "values": "zetadevcontrol" }}
+    { "principals": { "values": ["zetaprodcontrol"] },"framework_principals": { "type": "ANY" } }
   ]
 }
 EOL1
@@ -295,6 +166,21 @@ ALL_NODES=$(sudo maprcli node list -columns ip|cut -d" " -f1|grep -v "hostname"|
 # Get 3 Master Nodes for Mesos Master and Marathon Master  
 MASTER_NODES=$(echo ${ALL_NODES}|cut -d" " -f1,2,3)
 
+# Group Sync
+DIR="/mapr/$CLUSTERNAME/mesos/kstore/zetasync"
+sudo mkdir -p $DIR
+sudo chown zetaadm:zetaadm $DIR
+sudo chmod 775 $DIR
+
+cat > ${DIR}/zetagroups.list << GRPEOF
+zetausers:2501:mapr,zetaadm
+GRPEOF
+
+cat > ${DIR}/zetausers.list << USROF
+zetaadm:2500
+USROF
+
+
 # ENV Main
 DIR="/mapr/$CLUSTERNAME/mesos/kstore/env"
 sudo mkdir -p $DIR
@@ -302,14 +188,8 @@ sudo chown zetaadm:zetaadm $DIR
 sudo chmod 775 $DIR
 
 
-# ENV Added Sripts
-DIR="/mapr/$CLUSTERNAME/mesos/kstore/env/env_prod"
-sudo mkdir -p $DIR
-sudo chown zetaadm:zetaadm $DIR
-sudo chmod 775 $DIR
-
-echo "Building Zeta ENV File"
-cat > $ZETA_ENV_FILE << EOL3
+echo "Building Zeta Master ENV File"
+cat > /mapr/$CLUSTERNAME/mesos/kstore/env/master_env.sh << EOL3
 #!/bin/bash
 
 # START GLOBAL ENV Variables for Zeta Environment
@@ -326,35 +206,8 @@ export ZETA_MESOS_LEADER_PORT="5050"
 export ZETA_NODES="${ALL_NODES}"
 export ZETA_MESOS_AGENTS="${ALL_NODES}"
 export ZETA_MESOS_MASTERS="${MASTER_NODES}"
-
-export ZETA_MARATHON_MASTERS="${MASTER_NODES}"
-export ZETA_MARATHON_ENV="marathonprod"
-export ZETA_MARATHON_HOST="\${ZETA_MARATHON_ENV}.\${ZETA_MESOS_DOMAIN}"
-export ZETA_MARATHON_PORT="20080"
-
-export ZETA_CHRONOS_ENV="chronosprod"
-export ZETA_CHRONOS_HOST="\${ZETA_CHRONOS_ENV}.\${ZETA_MARATHON_ENV}.\${ZETA_MESOS_DOMAIN}"
-export ZETA_CHRONOS_PORT="20180"
 # END GLOBAL ENV VARIABLES
-
-# Source env_prod
-for SRC in /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/*.sh; do
-   . \$SRC
-done
-
-if [ "\$1" == "1" ]; then
-    env|grep -P "^ZETA_"
-fi
-
 EOL3
-
-chmod +x $ZETA_ENV_FILE
-
-#Create a dummy script in the env_prod directory so that file not found errors don't appear when sourcing main file
-cat > /mapr/$CLUSTERNAME/mesos/kstore/env/env_prod/env_prod.sh << EOL5
-#!/bin/bash
-# Basic script to keep file not found errors from happening 
-EOL5
 
 #########
 # By creating a world reable directory in MapRFS for tickets, and then setting permission on each ticket to be only user readble, we have a one stop shop to store tickets
@@ -387,5 +240,26 @@ cat > /mapr/$CLUSTERNAME/mesos/kstore/agents/credential.json << EOL4
 EOL4
 
 
-echo "Now follow the scripts in this directory in order, 4_, 5_ etc to finish installation"
+########################
+# untar zeta_packages.tgz
+# get the zetaadmin package move it to /home/zetaadm
+# untar zetaadmin package
+# cp to /mapr/$CLUSTERNAME/user/zetaadm/
+# ensure scripts are set to be executable
 
+echo "Untarring Packages"
+tar zxf zeta_packages.tgz
+
+echo "Copying zetaadmin.tgz, untarring, and copying to maprfs location"
+cp ./zeta_packages/zeta_inst_zetaadmin.tgz ./
+tar zxf zeta_inst_zetaadmin.tgz
+cp -R zetaadmin /mapr/$CLUSTERNAME/user/zetaadm/
+
+echo "Removing install package and setting scripts to executable"
+rm zeta_inst_zetaadmin.tgz
+chmod +x ./zetaadmin/*
+chmod +x /mapr/$CLUSTERNAME/user/zetaadm/zetaadmin/*
+
+
+
+echo "Main Layout for Zeta installed"
