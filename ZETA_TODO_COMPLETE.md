@@ -11,6 +11,6 @@
     * Main Script only has Zookeeper, Mesos, Marathon and Chronos. All other install packages should put script in the env_%rolename% directory
     * Updated all installers to take advantage of this.
     * Some installers will require you add the files and then source them right away
-
+* Update mapr user password on all nodes
 
 

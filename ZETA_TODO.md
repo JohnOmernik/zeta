@@ -15,7 +15,6 @@ There will always be to many things to do in this project, and not enough time. 
   * Then more "per node stuff" for docker, mesos, etc. 
   * The idea here is we need to make one path for initial install and another path for individual node add. 
 * Create a CA Store for Zeta user that is trusted by all nodes
-* Update mapr user password on all nodes
 * Find a way to parallelize the package installs for Docker and Mesos. Right now it's a serial process adding lots of time to an install. 
 * Handle Roles/Permissions better in Zeta (take advantage of Mesos/MapR roles, weights, reservations etc)
 * Update Package Installer to be a bit more robust
