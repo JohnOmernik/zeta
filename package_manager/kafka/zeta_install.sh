@@ -2,7 +2,7 @@
 
 APP="kafka"
 
-read -e -p "Please enter the Mesos Role you wish to install ${APP} to:" -i "prod" MESOS_ROLE
+read -e -p "Please enter the Mesos Role you wish to install ${APP} to: " -i "prod" MESOS_ROLE
 
 CLUSTERNAME=$(ls /mapr)
 
@@ -19,7 +19,7 @@ if [ -d "${APP_ROOT}" ]; then
     exit 1
 fi
 
-echo "Making Directories for kafka"
+echo "Making Directories for ${APP}"
 mkdir -p ${APP_ROOT}
 mkdir -p ${APP_ROOT}/${APP}_packages
 
@@ -40,4 +40,5 @@ echo ""
 echo "1. Make some ${APP} tgzs to run in Zeta with ${APP_ROOT}/get_${APP}_release.sh"
 echo "2. Install a specific ${APP} instance with ${APP_ROOT}/install_instance.sh"
 echo "3. Setup your brokers with ${APP_ROOT}/\$YOUR_INSTANCE/initial_broker_setup.sh"
+echo ""
 

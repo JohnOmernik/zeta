@@ -1,79 +1,100 @@
 #!/bin/bash
 
-MESOS_ROLE="prod"
-
 CLUSTERNAME=$(ls /mapr)
 
+ROLE_GUESS=$(pwd|cut -d"/" -f5)
 
+APP="drill"
+
+APP_UP=$(echo $APP | tr '[:lower:]' '[:upper:]')
+
+read -e -p "We autodetected the Mesos Role as ${ROLE_GUESS}. Please enter the Mesos role to use for this instance install: " -i $ROLE_GUESS MESOS_ROLE
+
+read -e -p "Please enter the instance name to install under Mesos Role: ${MESOS_ROLE}: " -i "${APP}${MESOS_ROLE}" APP_ID
+
+read -e -p "Please enter the $APP Version you wish to install this instance with: " -i "drill-1.6.0" APP_VER
+
+
+cd "$(dirname "$0")"
+
+APP_ROOT="/mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/${APP}"
+APP_HOME="${APP_ROOT}/${APP_ID}"
+
+# Source role files for info and secrets
 . /mapr/$CLUSTERNAME/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
+. /mapr/$CLUSTERNAME/mesos/kstore/$MESOS_ROLE/secret/credential.sh
 
-APP_ID="drillprod"
-APP_VER="drill-1.6.0"
-APP_WEB_PORT="20000"
-APP_USER_PORT="20001"
-APP_BIT_PORT="20002"
-APP_CNT="1"
-
-DRILL_ROOT="/mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/drill"
-DRILL_HOME="${DRILL_ROOT}/${APP_ID}"
-
-if [ -f "/mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/drill_${APP_ID}.sh" ]; then
-    echo "drill instance ${APP_ID} for ${MESOS_ROLE} already exists based on env script /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/drill_${APP_ID}.sh"
-    echo "Install not proceeding"
+if [ -d "$APP_HOME" ]; then
+    echo "The Installation Directory already exists at $APP_HOME"
+    echo "Installation will not continue over that, please rename or delete the existing directory to install fresh"
     exit 1
 fi
 
-if [ -d "${DRILL_HOME}" ]; then
-    echo "While the env script for this instance doesn't exist, the directory does."
-    echo "Not proceeding until you fix that up"
+if [ -f "/mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP}_${APP_ID}.sh" ]; then
+    echo "env script for $APP_ID exists. Will not proceed until you handle that"
+    echo "/mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP}_${APP_ID}.sh"
     exit 1
 fi
 
-PKGS=$(ls ${DRILL_ROOT}/drill_packages/)
+PKGS=$(ls ${APP_ROOT}/${APP}_packages/)
 
 if [ "$PKGS" == "" ]; then
-    echo "There are no Drill packages, please get some first by running get_drill_release.sh"
+    echo "There are no ${APP} packages, please get some first by running get_${APP}_release.sh"
     exit 1
 fi
-if [ ! -f "${DRILL_ROOT}/drill_packages/${APP_VER}.tgz" ]; then
-    echo "The version of drill you want: $APP_VER does not exist in ${DRILL_ROOT}/drill_packages" 
-    echo "Please set this up properly per get_drill_release.sh"
+if [ ! -f "${APP_ROOT}/${APP}_packages/${APP_VER}.tgz" ]; then
+    echo "The version of ${APP} you want: $APP_VER does not exist in ${APP_ROOT}/${APP}_packages" 
+    echo "Please set this up properly per get_${APP}_release.sh"
     exit 1
 fi
 
 
+###############
+# $APP Specific
+echo "The next step will walk through instance defaults for ${APP_ID}"
+echo ""
+echo "Ports: "
+read -e -p "Please enter the port for the Drill Web-ui and Rest API to run on for ${APP_ID}: " -i "20000" APP_WEB_PORT
+read -e -p "Please enter the port for the Drillbit User Port for ${APP_ID}: " -i "20001" APP_USER_PORT
+read -e -p "Please enter the port for the Drillbit Data port for ${APP_ID}: " -i "20002" APP_BIT_PORT
+echo ""
+echo "Resources"
+read -e -p "Please enter the amount of Heap Space per Drillbit: " -i "4G" APP_HEAP_MEM
+read -e -p "Please enter the amount of Direct Memory per Drillbit: " -i "8G" APP_DIRECT_MEM
+read -e -p "Please enter the amount of memory (total) to provide as a limit to Marathon. (If Heap is 4G and Direct is 8G, 12500 is a good number here for Marathon): " -i "12500" APP_MEM
+read -e -p "Please enter the amount of CPU shares to limit bits too in Marathon: " -i "4.0" APP_CPU
+echo ""
+echo "Misc:"
+read -e -p "What is the default MapR topology for your data to use for Spill Location Volume Creation? " -i "/data/default-rack" APP_TOPO_ROOT
+read -e -p "How many drillbits should we start by default: " -i "1" APP_CNT
+echo ""
 
-mkdir -p ${DRILL_HOME}
-mkdir -p ${DRILL_HOME}/log
-mkdir -p ${DRILL_HOME}/profiles
-mkdir -p ${DRILL_HOME}/conf.std
+mkdir -p ${APP_HOME}
+mkdir -p ${APP_HOME}/log
+mkdir -p ${APP_HOME}/conf.std
 
 
-cat > /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/drill_${APP_ID}.sh << EOL1
+cat > /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP}_${APP_ID}.sh << EOL1
 #!/bin/bash
-export ZETA_DRILL_${APP_ID}_ENV="${APP_ID}"
-export ZETA_DRILL_${APP_ID}_WEB_HOST="${APP_ID}.\${ZETA_MARATHON_ENV}.\${ZETA_MESOS_DOMAIN}"
-export ZETA_DRILL_${APP_ID}_WEB_PORT="${APP_WEB_PORT}"
-export ZETA_DRILL_${APP_ID}_USER_PORT="${APP_USER_PORT}"
-export ZETA_DRILL_${APP_ID}_BIT_PORT="${APP_BIT_PORT}"
+export ZETA_${APP_UP}_${APP_ID}_ENV="${APP_ID}"
+export ZETA_${APP_UP}_${APP_ID}_WEB_HOST="${APP_ID}.\${ZETA_MARATHON_ENV}.\${ZETA_MESOS_DOMAIN}"
+export ZETA_${APP_UP}_${APP_ID}_WEB_PORT="${APP_WEB_PORT}"
+export ZETA_${APP_UP}_${APP_ID}_USER_PORT="${APP_USER_PORT}"
+export ZETA_${APP_UP}_${APP_ID}_BIT_PORT="${APP_BIT_PORT}"
 EOL1
 
 
-cd ${DRILL_ROOT}
+cd ${APP_ROOT}
 
-tar zxf ./drill_packages/drill-1.6.0.tgz -C ./${APP_ID}/
+tar zxf ./${APP}_packages/${APP_VER}.tgz -C ./${APP_ID}/
 cd ${APP_ID}
-ln -s ${DRILL_HOME}/conf.std ${DRILL_HOME}/${DRILL_VER}/conf
+
+ln -s ${APP_HOME}/conf.std ${APP_HOME}/${APP_VER}/conf
 cp ./${APP_VER}/conf_orig/logback.xml ./conf.std/
 cp ./${APP_VER}/conf_orig/mapr.login.conf ./conf.std/
 cp ./${APP_VER}/conf_orig/core-site.xml ./conf.std/
 
-APP_HEAP_MEM="4G"
-APP_DIRECT_MEM="8G"
-APP_MEM="12500"
-APP_CPU="4.0"
-APP_TOPO_ROOT="/data/default-rack"
-cat > ${DRILL_HOME}/conf.std/drill-env.sh << EOF
+cat > ${APP_HOME}/conf.std/drill-env.sh << EOF
 # Licensed to the Apache Software Foundation (ASF) under one or more
 # contributor license agreements.  See the NOTICE file distributed with
 # this work for additional information regarding copyright ownership.
@@ -90,8 +111,9 @@ cat > ${DRILL_HOME}/conf.std/drill-env.sh << EOF
 # limitations under the License.
 
 CALL_SCRIPT="\$0"
-MESOS_ROLE="prod"
+MESOS_ROLE="${MESOS_ROLE}"
 CLUSTERNAME=\$(ls /mapr)
+APP_ID="${APP_ID}"
 # We are running Drill prod, so source the file
 . /mapr/\${CLUSTERNAME}/mesos/kstore/env/zeta_\${CLUSTERNAME}_\${MESOS_ROLE}.sh
 
@@ -133,17 +155,22 @@ o=\$(echo \$CALL_SCRIPT|grep sqlline)
 if [ "\$o" != "" ]; then
     echo "SQL Line: no SPILL Loc"
 else
-    export DRILL_SPILLLOC="\$SPILLLOC"
+    export DRILL_SPILLLOC="\$SPILLLOC/\${APP_ID}"
 
     VOLNAME="mapr.\${HOSTNAME}.local.drillspill"
 
     if [ -d "\${NFSROOT}\${SPILLLOC}" ]; then
         echo "Spill Location exists: \${SPILLLOC}"
+        if [ ! -d "\${NFSROOT}\${SPILLLOC}/\${APP_ID}" ]; then
+            echo "Spill Root exists, but not individual \$APP_ID Directory. Adding."
+            mkdir -p \${NFSROOT}\${SPILLLOC}/\${APP_ID}
+        fi
     else
         echo "Need to create SPILL LOCATION: \${SPILLLOC}"
         RUNCMD="maprcli volume create -name \${VOLNAME} -path \${SPILLLOC} -rootdirperms 775 -user mapr:fc,a,dump,restore,m,d -minreplication 1 -replication 1 -topology \${TOPO} -mount 1"
         echo "\$RUNCMD"
         \$RUNCMD
+        mkdir -p \${NFSROOT}\${SPILLLOC}/\${APP_ID}
     fi
 fi
 
@@ -151,7 +178,7 @@ export MAPR_IMPERSONATION_ENABLED=true
 export MAPR_TICKETFILE_LOCATION=/opt/mapr/conf/mapruserticket
 EOF
 
-cat > ${DRILL_HOME}/conf.std/drill-override.conf << EOF2
+cat > ${APP_HOME}/conf.std/drill-override.conf << EOF2
 # Licensed to the Apache Software Foundation (ASF) under one or more
 # contributor license agreements.  See the NOTICE file distributed with
 # this work for additional information regarding copyright ownership.
@@ -179,10 +206,11 @@ drill.exec: {
   http.port: \${ZETA_DRILL_${APP_ID}_WEB_PORT},
   rpc.user.server.port: \${ZETA_DRILL_${APP_ID}_USER_PORT},
   rpc.bit.server.port: \${ZETA_DRILL_${APP_ID}_BIT_PORT},
-  sys.store.provider.zk.blobroot: "maprfs:///mesos/${MESOS_ROLE}/drill/${APP_ID}/log/profiles",
+  sys.store.provider.zk.blobroot: "maprfs:///mesos/${MESOS_ROLE}/${APP}/${APP_ID}/log/profiles",
   sort.external.spill.directories: [ \${?DRILL_SPILLLOC} ],
   sort.external.spill.fs: "maprfs:///",
   zk.connect: \${ZETA_ZK},
+  zk.root: "${APP_ID}",
   impersonation: {
     enabled: true,
     max_chained_user_hops: 3
@@ -197,16 +225,16 @@ drill.exec: {
 EOF2
 
 
-cat > ${DRILL_HOME}/zetadrill << EOF3
+cat > ${APP_HOME}/zetadrill << EOF3
 #!/bin/bash
 
 # Setup Drill Locations Versions
-DRILL_LOC="${DRILL_HOME}"
+DRILL_LOC="${APP_HOME}"
 DRILL_VER="${APP_VER}"
 DRILL_BIN="/bin/sqlline"
 
 #This is your Drill url
-URL="jdbc:drill:zk:${ZETA_ZK}"
+URL="jdbc:drill:zk:${ZETA_ZK}/${APP_ID}"
 
 #Location for the prop file. (Should be user's home directoy)
 DPROP=~/prop\$\$
@@ -240,27 +268,40 @@ EOL
 (sleep 10; rm "\$DPROP") & \${DRILL_LOC}/\${DRILL_VER}\${DRILL_BIN} \${DPROP}
 
 EOF3
+chmod +x ${APP_HOME}/zetadrill
 
-cat > ${DRILL_HOME}/${APP_ID}.marathon << EOF4
+cat > ${APP_HOME}/${APP_ID}.marathon << EOF4
 {
-"cmd": "./${APP_VER}/bin/runbit --config /mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/drill/${APP_ID}/conf.std",
+"cmd": "./${APP_VER}/bin/runbit --config /mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/${APP}/${APP_ID}/conf.std",
 "cpus": ${APP_CPU},
 "mem": ${APP_MEM},
 "labels": {
     "PRODUCTION_READY":"True",
-    "ZETAENV":"Prod",
+    "ZETAENV":"${MESOS_ROLE}",
     "CONTAINERIZER":"Mesos"
 },
 "env": {
 "DRILL_VER": "${APP_VER}",
-"MESOS_ROLE": "prod",
+"MESOS_ROLE": "${MESOS_ROLE}",
 "APP_ID": "${APP_ID}"
 },
 "ports":[],
 "id": "${APP_ID}",
 "user": "mapr",
 "instances": ${APP_CNT},
-"uris": ["file:///mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/drill/drill_packages/${APP_VER}.tgz"],
+"uris": ["file:///mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/${APP}/${APP}_packages/${APP_VER}.tgz"],
 "constraints": [["hostname", "UNIQUE"]]
 }
 EOF4
+
+
+cp ${APP_ROOT}/start_instance.sh ${APP_HOME}/
+chmod +x ${APP_HOME}/start_instance.sh
+
+echo ""
+echo ""
+echo "Your instances ${APP_ID} is installed to ${APP_HOME}"
+echo "No go to to ${APP_HOME} and run start_instance.sh to submit to Marathon"
+echo ""
+echo ""
+

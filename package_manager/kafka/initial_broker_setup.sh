@@ -72,7 +72,7 @@ do
     BROKER="broker${X}"
     echo "Adding ${BROKER}..."
     VOL="${APP_ID}.${BROKER}"
-    MNT="/mesos/{$MESOS_ROLE}/${APP}/${APP_ID}/brokerdata/${BROKER}"
+    MNT="/mesos/${MESOS_ROLE}/${APP}/${APP_ID}/brokerdata/${BROKER}"
     NFSLOC="${APP_HOME}/brokerdata/${BROKER}/"
     sudo maprcli volume create -name $VOL -path $MNT -rootdirperms 775 -user zetaadm:fc,a,dump,restore,m,d
     ./kafka-mesos.sh broker add $X

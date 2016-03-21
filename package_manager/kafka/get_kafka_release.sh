@@ -15,9 +15,9 @@ APP_ROOT="/mapr/$CLUSTERNAME/mesos/$MESOS_ROLE/${APP}"
 WORK_DIR="/tmp"
 
 echo "Preparing Temp Area to build ${APP}"
-rm -rf $WORK_DIR/kafka
+rm -rf $WORK_DIR/${APP}
 cd $WORK_DIR
-mkdir kafka
+mkdir ${APP}
 
 APP_URL_ROOT="https://archive.apache.org/dist/kafka/0.9.0.1/"
 APP_URL_FILE="kafka_2.10-0.9.0.1.tgz"
@@ -50,7 +50,7 @@ APP_TGZ="${APP}-mesos-${APP_MESOS_VER}.tgz"
 
 tar zcf ${APP_TGZ} ./*
 
-if [ -f "${APP_ROOT}/${APP}_packages/${APP_TGZ}.tgz" ]; then
+if [ -f "${APP_ROOT}/${APP}_packages/${APP_TGZ}" ]; then
     echo "This package already exists. We can exit now, without overwriting, or you can overwrite with the package you just built"
     read -e -p "Should we overwrite ${APP_TGZ} located in ${APP_ROOT}/${APP}_packages with the currently built package? (Y/N): " -i "N" OW
     if [ "$OW" != "Y" ]; then
@@ -61,6 +61,9 @@ fi
 
 mv ${APP_TGZ} ${APP_ROOT}/${APP}_packages/
 echo ""
-echo "Built ${APP_TGZ} using ${APP_URL_FILE} and moved to ${APP_ROOT}}/${APP}_packages/"
+echo "Built ${APP_TGZ} using ${APP_URL_FILE} and moved to ${APP_ROOT}/${APP}_packages/"
 echo ""
 
+
+cd ${WORK_DIR}
+rm -rf ${WORK_DIR}/${APP}

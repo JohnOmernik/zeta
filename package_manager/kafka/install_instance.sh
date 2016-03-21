@@ -4,8 +4,8 @@ CLUSTERNAME=$(ls /mapr)
 
 ROLE_GUESS=$(pwd|cut -d"/" -f5)
 
-
 APP="kafka"
+
 APP_UP=$(echo $APP | tr '[:lower:]' '[:upper:]')
 
 read -e -p "We autodetected the Mesos Role as ${ROLE_GUESS}. Please enter the Mesos role to use for this instance install: " -i $ROLE_GUESS MESOS_ROLE
@@ -16,15 +16,9 @@ read -e -p "Please enter the $APP Version you wish to install this instance with
 
 MARATHON_SUBMIT="/home/zetaadm/zetaadmin/marathon${MESOS_ROLE}_submit.sh"
 
-
-###############
-# $APP Specific
-read -e -p "Please enter the port for the kafka-mesos api to run on for ${APP_ID}: " -i 21000 APP_PORT
-
 cd "$(dirname "$0")"
 
-
-APP_ROOT="/mapr/{$CLUSTERNAME}/mesos/${MESOS_ROLE}/${APP}"
+APP_ROOT="/mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/${APP}"
 APP_HOME="${APP_ROOT}/${APP_ID}"
 
 # Source role files for info and secrets
@@ -43,7 +37,6 @@ if [ -f "/mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP}_${APP_ID}.
     exit 1
 fi
 
-
 PKGS=$(ls ${APP_ROOT}/${APP}_packages/)
 
 if [ "$PKGS" == "" ]; then
@@ -56,9 +49,18 @@ if [ ! -f "${APP_ROOT}/${APP}_packages/${APP_VER}.tgz" ]; then
     exit 1
 fi
 
+###############
+# $APP Specific
+read -e -p "Please enter the port for the kafka-mesos api to run on for ${APP_ID}: " -i 21000 APP_PORT
+
 
 echo "Making ${APP} instance directories for ${APP_ID}"
 mkdir -p ${APP_HOME}
+cd ${APP_HOME}
+
+cp ${APP_ROOT}/${APP}_packages/${APP_VER}.tgz ${APP_HOME}/
+tar zxf ./${APP_VER}.tgz
+
 
 cp ${APP_ROOT}/initial_broker_setup.sh ${APP_HOME}/
 chmod +x ${APP_ROOT}/initial_broker_setup.sh
@@ -73,7 +75,9 @@ EOL1
 
 . /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP}_${APP_ID}.sh
 
-cat > /mapr/$CLUSTERNAME/mesos/${MESOS_ROLE}/${APP}/${APP_ID}/kafka-mesos.properties << EOF
+# Create config file
+
+cat > ${APP_HOME}/kafka-mesos.properties << EOF
 # Scheduler options defaults. See ./kafka-mesos.sh help scheduler for more details
 debug=false
 
@@ -95,24 +99,25 @@ secret=${ROLE_PASS}
 
 EOF
 
-
-cat > /mapr/$CLUSTERNAME/mesos/${MESOS_ROLE}/${APP}/${APP_ID}/${APP_ID}.marathon << EOF2
+# Create Marathon File
+cat > ${APP_HOME}/${APP_ID}.marathon << EOF2
 {
 "id": "${APP_ID}",
 "instances": 1,
 "cmd": "./kafka-mesos.sh scheduler /mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/${APP}/${APP_ID}/kafka-mesos.properties",
 "cpus": 1,
 "mem": 768,
-"ports":[${APP_PORT}],
+"ports":[],
 "labels": {
     "PRODUCTION_READY":"True",
     "ZETAENV":"${MESOS_ROLE}",
     "CONTAINERIZER":"Mesos"
 },
-"uris": ["file:///mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/${APP}/${APP_ID}/kafka-mesos-${KAFKA_MESOS_VER}.tgz"]
+"uris": ["file:///mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/${APP}/${APP_ID}/${APP_VER}.tgz"]
 }
 
 EOF2
+
 
 echo ""
 echo "Submitting to Marathon:"
