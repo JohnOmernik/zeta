@@ -63,7 +63,7 @@ tar zxf ./${APP_VER}.tgz
 
 
 cp ${APP_ROOT}/initial_broker_setup.sh ${APP_HOME}/
-chmod +x ${APP_ROOT}/initial_broker_setup.sh
+chmod +x ${APP_HOME}/initial_broker_setup.sh
 
 
 cat > /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP}_${APP_ID}.sh << EOL1

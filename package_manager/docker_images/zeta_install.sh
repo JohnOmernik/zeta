@@ -1,6 +1,10 @@
 #!/bin/bash
 
-MESOS_ROLE="prod"
+#!/bin/bash
+
+APP="docker_images"
+
+read -e -p "Please enter the Mesos Role you wish to install ${APP} to: " -i "prod" MESOS_ROLE
 
 CLUSTERNAME=$(ls /mapr)
 
@@ -9,35 +13,35 @@ cd "$(dirname "$0")"
 . /mapr/$CLUSTERNAME/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
 
 
-INST_DIR="/mapr/$CLUSTERNAME/mesos/$MESOS_ROLE/docker_images"
+APP_ROOT="/mapr/$CLUSTERNAME/mesos/$MESOS_ROLE/${APP}"
 
-if [ -d "$INST_DIR" ]; then
-    echo "The Installation Directory already exists at $INST_DIR"
+if [ -d "${APP_ROOT}" ]; then
+    echo "The Installation Directory already exists at ${APP_ROOT}"
     echo "Installation will not continue over that, please rename or delete the existing directory to install fresh"
     exit 1
 fi
-echo "Making Directories for kafka"
-mkdir -p ${INST_DIR}
 
-cp -R ./* ${INST_DIR}/
-rm ${INST_DIR}/zeta_install.sh
+echo "Making Directories for ${APP}"
+mkdir -p ${APP_ROOT}
 
+cp -R ./* ${APP_ROOT}/
+rm ${APP_ROOT}/zeta_install.sh
+chmod +x ${APP_ROOT}/build_images.sh
 
+cd ${APP_ROOT}
 
-REG="${ZETA_DOCKER_REG_URL}"
-
-cd ${INST_DIR}
-
-IMAGES="minopenjdk7 minjdk8 minpython2 rsyncbase minopenjre7 minopenjdk7mvn333 minjdk8mvn333"
-
-for IMAGE in $IMAGES; do
-    echo "Running on $IMAGE"
-    cd $IMAGE
-    sudo docker build -t ${REG}/${IMAGE} .
-    sudo docker push ${REG}/${IMAGE}
-    cd ..
+for D in ./*; do
+    if [ -d "${D}" ]; then
+        sed -i "s/FROM zeta/FROM ${ZETA_DOCKER_REG_URL}/" ${D}/Dockerfile
+    fi
 done
 
 
-echo "Docker Base Images were built and pushed"
-echo "You can always do it again by running ${INST_DIR}/build_base.sh"
+
+
+echo "Base Docker Image Build script installed to ${APP_ROOT}"
+echo "To Build and push to Docker Registry, run: ${APP_ROOT}/build_images.sh"
+echo ""
+echo "Images can be rebuilt at anytime with the build_images.sh script"
+echo ""
+

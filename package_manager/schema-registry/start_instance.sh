@@ -5,16 +5,19 @@ ROLE_GUESS=$(pwd|cut -d"/" -f5)
 
 APP_ID_GUESS=$(basename `pwd`)
 
-APP="drill"
-
-APP_UP=$(echo $APP | tr '[:lower:]' '[:upper:]')
+APP="schema-registry"
 
 read -e -p "We autodetected the Mesos Role as ${ROLE_GUESS}. Please enter the Mesos role to use for this instance install: " -i $ROLE_GUESS MESOS_ROLE
-APP_ROOT="/mapr/$CLUSTERNAME/mesos/${MESOS_ROLE}/${APP}"
 
 read -e -p "We autodetected the instance for ${APP} startup to be ${APP_ID_GUESS}. Please enter the instance name for ${APP} startup: " -i ${APP_ID_GUESS} APP_ID
+
+APP_ROOT="/mapr/$CLUSTERNAME/mesos/${MESOS_ROLE}/${APP}"
 APP_HOME="${APP_ROOT}/${APP_ID}"
 
+APP_ID_ENV=$(echo ${APP_ID}|tr "-" "_")
+
+
+MARATHON_SUBMIT="/home/zetaadm/zetaadmin/marathon${MESOS_ROLE}_submit.sh"
 
 . /mapr/$CLUSTERNAME/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
 
@@ -25,18 +28,24 @@ fi
 
 cd ${APP_HOME}
 
-echo ""
-
-MARATHON_SUBMIT="/home/zetaadm/zetaadmin/marathon${MESOS_ROLE}_submit.sh"
-
 $MARATHON_SUBMIT ${APP_ID}.marathon
 
-TNAME="ZETA_DRILL_${APP_ID}_WEB_PORT"
-eval TPORT=\$$TNAME
+TWEB="ZETA_SCHEMAREGISTRY_${APP_ID_ENV}_HOST"
+TPORT="ZETA_SCHEMAREGISTRY_${APP_ID_ENV}_PORT"
+eval RWEB=\$$TWEB
+eval RPORT=\$$TPORT
 
 echo ""
 echo ""
-echo "Your Drill cluster should be run per your specs"
-echo "The Web UI should be here: https://${APP_ID}.${ZETA_MARATHON_HOST}:${TPORT}"
+echo "Your ${APP} Instance is running:"
+echo "The Schema Registry lives here: http://${RWEB}:${RPORT}"
 echo ""
 echo ""
+
+
+
+
+
+
+
+

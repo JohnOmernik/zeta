@@ -1,5 +1,5 @@
 # Docker base image for Oracle JDK 8 w/glibc-2.21.
-FROM alpine:3.2
+FROM alpine:3.3
 MAINTAINER Stuart Wong <cgs.wong@gmail.com>
 
 # Setup environment

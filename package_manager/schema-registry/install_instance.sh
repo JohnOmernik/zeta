@@ -1,47 +1,76 @@
 #!/bin/bash
 
-MESOS_ROLE="prod"
-
 CLUSTERNAME=$(ls /mapr)
+
+ROLE_GUESS=$(pwd|cut -d"/" -f5)
+
+APP="schema-registry"
+
+read -e -p "We autodetected the Mesos Role as ${ROLE_GUESS}. Please enter the Mesos role to use for this instance install: " -i $ROLE_GUESS MESOS_ROLE
+
+read -e -p "Please enter the instance name to install under Mesos Role: ${MESOS_ROLE}: " -i "${APP}-${MESOS_ROLE}" APP_ID
+
+read -e -p "What instance name of Kafka will this instance of ${APP} be running against: " -i "kafka${MESOS_ROLE}" APP_KAFKA_ID
+
+read -e -p "Please enter the service port for ${APP_ID} instance of ${APP}: " -i "48081" APP_PORT
+
 
 cd "$(dirname "$0")"
 
+APP_ROOT="/mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/${APP}"
+APP_HOME="${APP_ROOT}/${APP_ID}"
+
+# Source role files for info and secrets
 . /mapr/$CLUSTERNAME/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
 
-BASE_DIR="/mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/schema-registry"
+if [ -d "$APP_HOME" ]; then
+    echo "The Installation Directory already exists at $APP_HOME"
+    echo "Installation will not continue over that, please rename or delete the existing directory to install fresh"
+    exit 1
+fi
 
-cd ${BASE_DIR}
-
-
-
-
-echo "What should this schema-registry instance name be? It will be appeneded to schema-registry- to get the marathon app id"
-read -e -p "Schema-Registry name: " -i "$MESOS_ROLE" INST_NAME
-echo ""
-
-echo "What service port should we use? (Note, if this service port is in use, the marathon submit will fail)"
-read -e -p "Service Port: " -i "48081" INST_PORT
-echo ""
-
-FULL_INST_NAME="schema-registry-${INST_NAME}"
-
-if [ -d "${BASE_DIR}/${FULL_INST_NAME}" ]; then
-    echo "This instance name has alredy been taken. No Further actions taken"
+if [ -f "/mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP}_${APP_ID}.sh" ]; then
+    echo "env script for $APP_ID exists. Will not proceed until you handle that"
+    echo "/mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP}_${APP_ID}.sh"
     exit 1
 fi
 
 
-mkdir -p ${BASE_DIR}/${FULL_INST_NAME}
-mkdir -p ${BASE_DIR}/${FULL_INST_NAME}/conf
-cp ./conf/* ${BASE_DIR}/${FULL_INST_NAME}/conf/
-cat > ${BASE_DIR}/${FULL_INST_NAME}/conf/schema-registry.properties << EOF
+TZK="ZETA_KAFKA_${APP_KAFKA_ID}_ZK"
+eval RZK=\$$TZK
+
+echo "Making Instance Directories"
+mkdir -p ${APP_HOME}
+mkdir -p ${APP_HOME}/conf
+cp ${APP_ROOT}/conf/* ${APP_HOME}/conf/
+cp ${APP_ROOT}/start_instance.sh ${APP_HOME}
+chmod +x ${APP_HOME}/start_instance.sh
+
+
+
+echo ""
+echo "Adding env files"
+
+APP_ID_ENV=$(echo ${APP_ID}|tr "-" "_")
+cat > /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP}_${APP_ID}.sh << EOL1
+#!/bin/bash
+export ZETA_SCHEMAREGISTRY_${APP_ID_ENV}_ENV="${APP_ID}"
+export ZETA_SCHEMAREGISTRY_${APP_ID_ENV}_HOST="${APP_ID}.\${ZETA_MARATHON_ENV}.\${ZETA_MESOS_DOMAIN}"
+export ZETA_SCHEMAREGISTRY_${APP_ID_ENV}_PORT="${APP_PORT}"
+EOL1
+
+echo ""
+echo "Creating Config"
+
+
+cat > ${APP_HOME}/conf/schema-registry.properties << EOF
 port=8081
 
-kafkastore.connection.url=${ZETA_KAFKA_ZK}
+kafkastore.connection.url=${RZK}
 
-host.name=${FULL_INST_NAME}.${ZETA_MARATHON_ENV}.${ZETA_MESOS_DOMAIN}
+host.name=${APP_ID}.${ZETA_MARATHON_ENV}.${ZETA_MESOS_DOMAIN}
 
-schema.registry.zk.namespace=${FULL_INST_NAME}
+schema.registry.zk.namespace=${APP_ID}
 
 kafkastore.topic=_schemas
 
@@ -49,15 +78,18 @@ debug=false
 
 EOF
 
-cat > ${BASE_DIR}/${FULL_INST_NAME}/${FULL_INST_NAME}.marathon << EOF1
+echo ""
+echo "Creating Marathon Script"
+
+cat > ${APP_HOME}/${APP_ID}.marathon << EOF1
 {
-  "id": "${FULL_INST_NAME}",
+  "id": "${APP_ID}",
   "cpus": 1,
   "mem": 512,
   "instances": 1,
   "cmd":"/confluent-2.0.1/bin/schema-registry-start /conf/schema-registry.properties",
   "labels": {
-   "PRODUCTION_READY":"True", "CONTAINERIZER":"Docker", "ZETAENV":"Prod"
+   "PRODUCTION_READY":"True", "CONTAINERIZER":"Docker", "ZETAENV":"${MESOS_ROLE}"
   },
   "container": {
     "type": "DOCKER",
@@ -65,13 +97,13 @@ cat > ${BASE_DIR}/${FULL_INST_NAME}/${FULL_INST_NAME}.marathon << EOF1
       "image": "${ZETA_DOCKER_REG_URL}/confluent_base",
       "network": "BRIDGE",
       "portMappings": [
-        { "containerPort": 8081, "hostPort": 0, "servicePort": ${INST_PORT}, "protocol": "tcp"}
+        { "containerPort": 8081, "hostPort": 0, "servicePort": ${APP_PORT}, "protocol": "tcp"}
       ]
     },
   "volumes": [
       {
         "containerPath": "/conf",
-        "hostPath": "/mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/schema-registry/${FULL_INST_NAME}/conf",
+        "hostPath": "${APP_HOME}/conf",
         "mode": "RO"
       }
     ]
@@ -81,4 +113,9 @@ EOF1
 
 
 
-/home/zetaadm/zetaadmin/marathonprod_submit.sh ${BASE_DIR}/${FULL_INST_NAME}/${FULL_INST_NAME}.marathon
+echo ""
+echo ""
+echo "Your ${APP} instance: ${APP_ID} is installed."
+echo "Go to ${APP_HOME} and run start_instance.sh to start your instance"
+echo "" 
+echo ""
