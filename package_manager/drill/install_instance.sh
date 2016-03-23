@@ -2,7 +2,7 @@
 
 CLUSTERNAME=$(ls /mapr)
 
-ROLE_GUESS=$(pwd|cut -d"/" -f5)
+ROLE_GUESS=$(echo "$(realpath "$0")"|cut -d"/" -f5)
 
 APP="drill"
 

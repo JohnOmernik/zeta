@@ -5,16 +5,17 @@ ROLE_GUESS=$(echo "$(realpath "$0")"|cut -d"/" -f5)
 
 APP_ID_GUESS=$(basename $(dirname `realpath "$0"`))
 
-APP="drill"
+APP="mesos-ui"
 
-APP_UP=$(echo $APP | tr '[:lower:]' '[:upper:]')
 
 read -e -p "We autodetected the Mesos Role as ${ROLE_GUESS}. Please enter the Mesos role to use for this instance install: " -i $ROLE_GUESS MESOS_ROLE
-APP_ROOT="/mapr/$CLUSTERNAME/mesos/${MESOS_ROLE}/${APP}"
 
 read -e -p "We autodetected the instance for ${APP} startup to be ${APP_ID_GUESS}. Please enter the instance name for ${APP} startup: " -i ${APP_ID_GUESS} APP_ID
+
+APP_ROOT="/mapr/$CLUSTERNAME/mesos/${MESOS_ROLE}/${APP}"
 APP_HOME="${APP_ROOT}/${APP_ID}"
 
+MARATHON_SUBMIT="/home/zetaadm/zetaadmin/marathon${MESOS_ROLE}_submit.sh"
 
 . /mapr/$CLUSTERNAME/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
 
@@ -23,20 +24,11 @@ if [ ! -d "${APP_HOME}" ]; then
     exit 1
 fi
 
-cd ${APP_HOME}
-
-echo ""
-
-MARATHON_SUBMIT="/home/zetaadm/zetaadmin/marathon${MESOS_ROLE}_submit.sh"
-
-$MARATHON_SUBMIT ${APP_ID}.marathon
-
-TNAME="ZETA_DRILL_${APP_ID}_WEB_PORT"
-eval TPORT=\$$TNAME
+$MARATHON_SUBMIT ${APP_HOME}/${APP_ID}.marathon
 
 echo ""
 echo ""
-echo "Your Drill cluster should be run per your specs"
-echo "The Web UI should be here: https://${APP_ID}.${ZETA_MARATHON_HOST}:${TPORT}"
+echo "Your ${APP} Instance is running"
 echo ""
 echo ""
+

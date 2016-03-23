@@ -1,9 +1,9 @@
 #!/bin/bash
 CLUSTERNAME=$(ls /mapr)
 
-ROLE_GUESS=$(pwd|cut -d"/" -f5)
+ROLE_GUESS=$(echo "$(realpath "$0")"|cut -d"/" -f5)
 
-APP_ID_GUESS=$(basename `pwd`)
+APP_ID_GUESS=$(basename $(dirname `realpath "$0"`))
 
 APP="schema-registry"
 
