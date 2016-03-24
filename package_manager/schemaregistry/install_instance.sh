@@ -13,7 +13,7 @@ fi
 
 read -e -p "We autodetected the Mesos Role as ${ROLE_GUESS}. Please enter the Mesos role to use for this instance install: " -i $ROLE_GUESS MESOS_ROLE
 
-read -e -p "Please enter the instance name to install under Mesos Role: ${MESOS_ROLE}: " -i "${APP}-${MESOS_ROLE}" APP_ID
+read -e -p "Please enter the instance name to install under Mesos Role: ${MESOS_ROLE}: " -i "${APP}${MESOS_ROLE}" APP_ID
 
 if [[ ! "${APP_ID}" =~ $re ]]; then
     echo "Instance name can only be lowercase letters and numbers"
@@ -110,7 +110,7 @@ cat > ${APP_HOME}/${APP_ID}.marathon << EOF1
   "container": {
     "type": "DOCKER",
     "docker": {
-      "image": "${ZETA_DOCKER_REG_URL}/confluent_base",
+      "image": "${ZETA_DOCKER_REG_URL}/confluentbase",
       "network": "BRIDGE",
       "portMappings": [
         { "containerPort": 8081, "hostPort": 0, "servicePort": ${APP_PORT}, "protocol": "tcp"}

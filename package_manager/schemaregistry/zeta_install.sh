@@ -25,7 +25,7 @@ if [ -d "${APP_ROOT}" ]; then
     exit 1
 fi
 
-if [ ! -d "/mapr/$CLUSTERNAME/mesos/$MESOS_ROLE/confluent_base" ]; then
+if [ ! -d "/mapr/$CLUSTERNAME/mesos/$MESOS_ROLE/confluentbase" ]; then
     echo "Cannot install ${APP} without confluent base package"
     echo "Please install confluent_base first"
     echo "Exiting"
