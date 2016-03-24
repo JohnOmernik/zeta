@@ -1,13 +1,15 @@
 #!/bin/bash
 
-APP="kafka"
+#!/bin/bash
+
+APP="dockerimages"
 
 re="^[a-z0-9]+$"
+
 if [[ ! "${APP}" =~ $re ]]; then
     echo "App name can only be lowercase letters and numbers"
     exit 1
 fi
-
 read -e -p "Please enter the Mesos Role you wish to install ${APP} to: " -i "prod" MESOS_ROLE
 
 CLUSTERNAME=$(ls /mapr)
@@ -27,24 +29,25 @@ fi
 
 echo "Making Directories for ${APP}"
 mkdir -p ${APP_ROOT}
-mkdir -p ${APP_ROOT}/${APP}_packages
 
-#Scripts to move
+cp -R ./* ${APP_ROOT}/
+rm ${APP_ROOT}/zeta_install.sh
+chmod +x ${APP_ROOT}/build_images.sh
 
-cp get_kafka_release.sh ${APP_ROOT}/
-cp install_instance.sh  ${APP_ROOT}/
-cp initial_broker_setup.sh ${APP_ROOT}/
+cd ${APP_ROOT}
 
-# Scripts to make executable (the config instance should not be executable as that is made +x when the instance is installed)
-chmod +x ${APP_ROOT}/get_kafka_release.sh
-chmod +x ${APP_ROOT}/install_instance.sh
+for D in ./*; do
+    if [ -d "${D}" ]; then
+        sed -i "s/FROM zeta/FROM ${ZETA_DOCKER_REG_URL}/" ${D}/Dockerfile
+    fi
+done
 
 
+
+
+echo "Base Docker Image Build script installed to ${APP_ROOT}"
+echo "To Build and push to Docker Registry, run: ${APP_ROOT}/build_images.sh"
 echo ""
-echo "${APP} Package installed to ${MESOS_ROLE}. Next steps:"
-echo ""
-echo "1. Make some ${APP} tgzs to run in Zeta with ${APP_ROOT}/get_${APP}_release.sh"
-echo "2. Install a specific ${APP} instance with ${APP_ROOT}/install_instance.sh"
-echo "3. Setup your brokers with ${APP_ROOT}/\$YOUR_INSTANCE/initial_broker_setup.sh"
+echo "Images can be rebuilt at anytime with the build_images.sh script"
 echo ""
 

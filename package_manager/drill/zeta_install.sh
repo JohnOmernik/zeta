@@ -2,6 +2,13 @@
 
 APP="drill"
 
+re="^[a-z0-9]+$"
+
+if [[ ! "${APP}" =~ $re ]]; then
+    echo "App name can only be lowercase letters and numbers"
+    exit 1
+fi
+
 read -e -p "Please enter the Mesos Role you wish to install ${APP} to: " -i "prod" MESOS_ROLE
 
 CLUSTERNAME=$(ls /mapr)

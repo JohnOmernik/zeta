@@ -86,7 +86,7 @@ echo "Updating Docker Daemon to handle insecure registry"
 /home/zetaadm/zetaadmin/run_cmd.sh "/mapr/$CLUSTERNAME/user/zetaadm/5_update_docker.sh"
 
 
-echo "Note: dockerregv2 uses host networking and the exposed port of 5000 due to the need to have the registry reachable before marathon-lb is up"
+echo "Note: dockerregv2 uses host networking and the exposed port of 5000 due to the need to have the registry reachable before marathonlb is up"
 echo ""
 echo ""
 /home/zetaadm/zetaadmin/marathon${MESOS_ROLE}_submit.sh $INST_DIR/${ZETA_DOCKER_REG_ID}.marathon

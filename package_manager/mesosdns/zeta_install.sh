@@ -8,14 +8,14 @@ cd "$(dirname "$0")"
 
 . /mapr/$CLUSTERNAME/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
 
-INST_DIR="/mapr/$CLUSTERNAME/mesos/$MESOS_ROLE/mesos-dns"
+INST_DIR="/mapr/$CLUSTERNAME/mesos/$MESOS_ROLE/mesosdns"
 
 if [ -d "$INST_DIR" ]; then
     echo "The Installation Directory already exists at $INST_DIR"
     echo "Installation will not continue over that, please rename or delete the existing directory to install fresh"
     exit 1
 fi
-echo "Making Directories for mesos-dns"
+echo "Making Directories for mesosdns"
 mkdir -p $INST_DIR
 
 
@@ -69,15 +69,15 @@ cat > $INST_DIR/config.json << EOL
 }
 EOL
 
-cat > $INST_DIR/mesos-dns.marathon << EOF
+cat > $INST_DIR/mesosdns.marathon << EOF
 {
-"cmd": "/mapr/$CLUSTERNAME/mesos/${MESOS_ROLE}/mesos-dns/mesos-dns-${VER}/mesos-dns-${VER}-linux-amd64 -config /mapr/$CLUSTERNAME/mesos/${MESOS_ROLE}/mesos-dns/config.json",
+"cmd": "/mapr/$CLUSTERNAME/mesos/${MESOS_ROLE}/mesosdns/mesos-dns-${VER}/mesos-dns-${VER}-linux-amd64 -config /mapr/$CLUSTERNAME/mesos/${MESOS_ROLE}/mesosdns/config.json",
 "cpus": 1.0,
 "mem": 768,
 "labels": {
 "PRODUCTION_READY":"True", "CONTAINERIZER": "Mesos", "ZETAENV":"Prod"
 },
-"id": "mesos-dns",
+"id": "mesosdns",
 "ports":[],
 "instances": 1,
 "user": "root",
@@ -90,13 +90,14 @@ echo "Getting a marathon hostname from the env script"
 
 MAR_HOST=$(echo $ZETA_MARATHON_MASTERS|cut -d" " -f1)
 
-echo "Starting mesos-dns"
+echo "Starting mesosdns"
 echo ""
-/home/zetaadm/zetaadmin/marathonprod_submit.sh $INST_DIR/mesos-dns.marathon ${MAR_HOST}
+/home/zetaadm/zetaadmin/marathonprod_submit.sh $INST_DIR/mesosdns.marathon ${MAR_HOST}
 echo ""
 echo ""
 sleep 5
 echo "Updating resolve.conf This won't survive reboot. This is fragile make stronger for production"
+echo ""
 echo ""
 /home/zetaadm/zetaadmin/run_cmd.sh "sudo sed -i -r 's/nameserver $RESOLVER/nameserver $IP/' /etc/resolv.conf"
 echo ""

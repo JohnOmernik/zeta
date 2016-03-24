@@ -5,12 +5,22 @@ CLUSTERNAME=$(ls /mapr)
 ROLE_GUESS=$(echo "$(realpath "$0")"|cut -d"/" -f5)
 
 APP="drill"
-
+re="^[a-z0-9]+$"
+if [[ ! "${APP}" =~ $re ]]; then
+    echo "App name can only be lowercase letters and numbers"
+    exit 1
+fi
 APP_UP=$(echo $APP | tr '[:lower:]' '[:upper:]')
 
 read -e -p "We autodetected the Mesos Role as ${ROLE_GUESS}. Please enter the Mesos role to use for this instance install: " -i $ROLE_GUESS MESOS_ROLE
 
 read -e -p "Please enter the instance name to install under Mesos Role: ${MESOS_ROLE}: " -i "${APP}${MESOS_ROLE}" APP_ID
+
+if [[ ! "${APP_ID}" =~ $re ]]; then
+    echo "App instance can only be lowercase letters and numbers"
+    exit 1
+fi
+
 
 read -e -p "Please enter the $APP Version you wish to install this instance with: " -i "drill-1.6.0" APP_VER
 

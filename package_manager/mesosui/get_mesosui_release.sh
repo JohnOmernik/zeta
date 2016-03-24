@@ -4,22 +4,20 @@ CLUSTERNAME=$(ls /mapr)
 
 ROLE_GUESS=$(echo "$(realpath "$0")"|cut -d"/" -f5)
 
-APP="mesos-ui"
+APP="mesosui"
+re="^[a-z0-9]+$"
+if [[ ! "${APP}" =~ $re ]]; then
+    echo "App name can only be lowercase letters and numbers"
+    exit 1
+fi
+
 
 read -e -p "We autodetected the Mesos Role as ${ROLE_GUESS}. Please enter the Mesos role to use for this ${APP} instance install: " -i $ROLE_GUESS MESOS_ROLE
 
 . /mapr/$CLUSTERNAME/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
 
 APP_ROOT="/mapr/$CLUSTERNAME/mesos/$MESOS_ROLE/${APP}"
-
-
-
-
-
 WORK_DIR="/tmp"
-
-
-
 
 echo "Preparing Temp Area to build ${APP}"
 sudo rm -rf $WORK_DIR/${APP}
@@ -39,8 +37,8 @@ WORKDIR /mesos-ui
 CMD ["python -V"]
 EOF1
 
-sudo docker build -t ${ZETA_DOCKER_REG_URL}/mesos-ui .
-sudo docker push ${ZETA_DOCKER_REG_URL}/mesos-ui
+sudo docker build -t ${ZETA_DOCKER_REG_URL}/mesosui .
+sudo docker push ${ZETA_DOCKER_REG_URL}/mesosui
 
 echo ""
 echo ""

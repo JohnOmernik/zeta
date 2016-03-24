@@ -7,6 +7,12 @@ ROLE_GUESS=$(echo "$(realpath "$0")"|cut -d"/" -f5)
 
 APP="drill"
 
+re="^[a-z0-9]+$"
+if [[ ! "${APP}" =~ $re ]]; then
+    echo "App name can only be lowercase letters and numbers"
+    exit 1
+fi
+
 read -e -p "We autodetected the Mesos Role as ${ROLE_GUESS}. Please enter the Mesos role to use for this ${APP} instance install: " -i $ROLE_GUESS MESOS_ROLE
 
 . /mapr/$CLUSTERNAME/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh

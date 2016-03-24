@@ -4,11 +4,25 @@ CLUSTERNAME=$(ls /mapr)
 
 MESOS_ROLE="prod"
 
-APP="mesos-ui"
+APP="mesosui"
 
-APP_ID="mesos-ui-prod"
+re="^[a-z0-9]+$"
+if [[ ! "${APP}" =~ $re ]]; then
+    echo "App name can only be lowercase letters and numbers"
+    exit 1
+fi
 
-echo "Mesos UI can only be installed to the prod role as mesos-ui-prod"
+APP_ID="mesosuiprod"
+
+if [[ ! "${APP_ID}" =~ $re ]]; then
+    echo "App name can only be lowercase letters and numbers"
+    exit 1
+fi
+
+
+APP_UP=$(echo $APP | tr '[:lower:]' '[:upper:]')
+
+echo "Mesos UI can only be installed to the prod role as mesosuiprod"
 
 read -e -p "Please enter the service port for ${APP_ID} instance of ${APP}: " -i "45001" APP_PORT
 
@@ -26,10 +40,26 @@ if [ -d "$APP_HOME" ]; then
     exit 1
 fi
 
+if [ -f "/mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP}_${APP_ID}.sh" ]; then
+    echo "env script for $APP_ID exists. Will not proceed until you handle that"
+    echo "/mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP}_${APP_ID}.sh"
+    exit 1
+fi
+
 mkdir -p ${APP_HOME}
 cp ${APP_ROOT}/start_instance.sh ${APP_HOME}/
 chmod +x ${APP_HOME}/start_instance.sh
 
+APP_ID_ENV=$(echo ${APP_UP}|tr "-" "_")
+
+cat > /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP}_${APP_ID}.sh << EOL1
+#!/bin/bash
+export ZETA_${APP_UP}_ENV="${APP_ID}"
+export ZETA_${APP_UP}_HOST="${APP_ID}.\${ZETA_MARATHON_ENV}.\${ZETA_MESOS_DOMAIN}"
+export ZETA_${APP_UP}_PORT="${APP_PORT}"
+EOL1
+
+. /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP}_${APP_ID}.sh 
 
 cat > ${APP_HOME}/${APP_ID}.marathon << EOF
 {
@@ -58,7 +88,7 @@ cat > ${APP_HOME}/${APP_ID}.marathon << EOF
   "container": {
     "type": "DOCKER",
     "docker": {
-      "image": "${ZETA_DOCKER_REG_URL}/mesos-ui",
+      "image": "${ZETA_DOCKER_REG_URL}/mesosui",
       "network": "BRIDGE",
       "portMappings": [
         {

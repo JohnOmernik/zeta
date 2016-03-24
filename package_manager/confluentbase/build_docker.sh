@@ -4,7 +4,14 @@ CLUSTERNAME=$(ls /mapr)
 
 ROLE_GUESS=$(echo "$(realpath "$0")"|cut -d"/" -f5)
 
-APP="confluent_base"
+APP="confluentbase"
+
+re="^[a-z0-9]+$"
+if [[ ! "${APP}" =~ $re ]]; then
+    echo "App name can only be lowercase letters and numbers"
+    exit 1
+fi
+
 
 read -e -p "We autodetected the Mesos Role as ${ROLE_GUESS}. Please enter the Mesos role to use for this instance install: " -i $ROLE_GUESS MESOS_ROLE
 
@@ -15,8 +22,6 @@ APP_ROOT="/mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/${APP}"
 
 
 cd ${APP_ROOT}/dockerbuild
-
-cd /mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/confluent_base/dockerbuild
 
 APP_URL_ROOT="http://packages.confluent.io/archive/2.0/"
 APP_URL_FILE="confluent-2.0.1-2.11.7.tar.gz"

@@ -7,12 +7,24 @@ APP_ID_GUESS=$(basename $(dirname `realpath "$0"`))
 
 APP="drill"
 
+re="^[a-z0-9]+$"
+if [[ ! "${APP}" =~ $re ]]; then
+    echo "App name can only be lowercase letters and numbers"
+    exit 1
+fi
+
 APP_UP=$(echo $APP | tr '[:lower:]' '[:upper:]')
 
 read -e -p "We autodetected the Mesos Role as ${ROLE_GUESS}. Please enter the Mesos role to use for this instance install: " -i $ROLE_GUESS MESOS_ROLE
 APP_ROOT="/mapr/$CLUSTERNAME/mesos/${MESOS_ROLE}/${APP}"
 
 read -e -p "We autodetected the instance for ${APP} startup to be ${APP_ID_GUESS}. Please enter the instance name for ${APP} startup: " -i ${APP_ID_GUESS} APP_ID
+
+if [[ ! "${APP_ID}" =~ $re ]]; then
+    echo "App instance can only be lowercase letters and numbers"
+    exit 1
+fi
+
 APP_HOME="${APP_ROOT}/${APP_ID}"
 
 

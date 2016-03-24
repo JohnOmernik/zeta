@@ -1,8 +1,13 @@
 #!/bin/bash
 
-#!/bin/bash
+APP="confluentbase"
 
-APP="docker_images"
+re="^[a-z0-9]+$"
+
+if [[ ! "${APP}" =~ $re ]]; then
+    echo "App name can only be lowercase letters and numbers"
+    exit 1
+fi
 
 read -e -p "Please enter the Mesos Role you wish to install ${APP} to: " -i "prod" MESOS_ROLE
 
@@ -23,25 +28,16 @@ fi
 
 echo "Making Directories for ${APP}"
 mkdir -p ${APP_ROOT}
+mkdir -p ${APP_ROOT}/dockerbuild
 
-cp -R ./* ${APP_ROOT}/
-rm ${APP_ROOT}/zeta_install.sh
-chmod +x ${APP_ROOT}/build_images.sh
+cp build_docker.sh ${APP_ROOT}/
 
-cd ${APP_ROOT}
+chmod +x ${APP_ROOT}/build_docker.sh
 
-for D in ./*; do
-    if [ -d "${D}" ]; then
-        sed -i "s/FROM zeta/FROM ${ZETA_DOCKER_REG_URL}/" ${D}/Dockerfile
-    fi
-done
-
-
-
-
-echo "Base Docker Image Build script installed to ${APP_ROOT}"
-echo "To Build and push to Docker Registry, run: ${APP_ROOT}/build_images.sh"
 echo ""
-echo "Images can be rebuilt at anytime with the build_images.sh script"
 echo ""
-
+echo "Confluent Base Docker Image build scripts installed to ${APP_ROOT}"
+echo "To build and push to Docker Registry, execute ${APP_ROOT}/build.docker.sh"
+echo "> ${APP_ROOT}/build_docker.sh"
+echo ""
+echo ""

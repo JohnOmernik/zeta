@@ -4,7 +4,7 @@ CLUSTERNAME=$(ls /mapr)
 
 ROLE_GUESS=$(echo "$(realpath "$0")"|cut -d"/" -f5)
 
-APP="kafka"
+APP="%YOURAPPNAME%"
 
 re="^[a-z0-9]+$"
 if [[ ! "${APP}" =~ $re ]]; then
@@ -12,17 +12,18 @@ if [[ ! "${APP}" =~ $re ]]; then
     exit 1
 fi
 
-APP_UP=$(echo $APP | tr '[:lower:]' '[:upper:]')
+APP_UP=$(echo $APP | tr '[:lower:]' '[:upper:]') # This is provide an upper case version of ${APP} for use in env variable scripts
 
 read -e -p "We autodetected the Mesos Role as ${ROLE_GUESS}. Please enter the Mesos role to use for this instance install: " -i $ROLE_GUESS MESOS_ROLE
 
-read -e -p "Please enter the instance name to install under Mesos Role: ${MESOS_ROLE}: " -i "${APP}${MESOS_ROLE}" APP_ID
+read -e -p "Please enter the instance name to install under Mesos Role: ${MESOS_ROLE}: " -i "${APP}${MESOS_ROLE}" APP_ID #Instance names can only be lowercase letters
 
 if [[ ! "${APP_ID}" =~ $re ]]; then
     echo "App instance name can only be lowercase letters and numbers"
     exit 1
 fi
 
+# Specifit to your app
 read -e -p "Please enter the $APP Version you wish to install this instance with: " -i "kafka-mesos-0.9.5.0" APP_VER
 
 MARATHON_SUBMIT="/home/zetaadm/zetaadmin/marathon${MESOS_ROLE}_submit.sh"
@@ -35,6 +36,11 @@ APP_HOME="${APP_ROOT}/${APP_ID}"
 # Source role files for info and secrets
 . /mapr/$CLUSTERNAME/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
 . /mapr/$CLUSTERNAME/mesos/kstore/$MESOS_ROLE/secret/credential.sh
+
+###########
+# Check for dependancies
+
+
 
 if [ -d "$APP_HOME" ]; then
     echo "The Installation Directory already exists at $APP_HOME"
@@ -72,22 +78,25 @@ cd ${APP_HOME}
 cp ${APP_ROOT}/${APP}_packages/${APP_VER}.tgz ${APP_HOME}/
 tar zxf ./${APP_VER}.tgz
 
-
+###Copy Extra files
 cp ${APP_ROOT}/initial_broker_setup.sh ${APP_HOME}/
 chmod +x ${APP_HOME}/initial_broker_setup.sh
 
 
+
+############
+# Create and env variable script for your app
 cat > /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP}_${APP_ID}.sh << EOL1
 #!/bin/bash
 export ZETA_${APP_UP}_${APP_ID}_ENV="${APP_ID}"
 export ZETA_${APP_UP}_${APP_ID}_ZK="\${ZETA_ZK}/${APP_ID}"
 export ZETA_${APP_UP}_${APP_ID}_API_PORT="${APP_PORT}"
 EOL1
-
+### Source it
 . /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP}_${APP_ID}.sh
 
 # Create config file
-
+# App specific
 cat > ${APP_HOME}/kafka-mesos.properties << EOF
 # Scheduler options defaults. See ./kafka-mesos.sh help scheduler for more details
 debug=false
@@ -110,7 +119,7 @@ secret=${ROLE_PASS}
 
 EOF
 
-# Create Marathon File
+# Create Marathon File - Kafka-mesos example
 cat > ${APP_HOME}/${APP_ID}.marathon << EOF2
 {
 "id": "${APP_ID}",
@@ -129,7 +138,7 @@ cat > ${APP_HOME}/${APP_ID}.marathon << EOF2
 
 EOF2
 
-
+#### This can be done here or in a separate script depending on your app install flow
 echo ""
 echo "Submitting to Marathon:"
 echo ""
@@ -138,7 +147,7 @@ echo ""
 echo ""
 
 
-
+###### Provide instructions
 echo "${APP} instance ${APP_ID} installed to ${APP_HOME}"
 echo " Please go to ${APP_HOME} and run initial_broker_setup.sh  to configure actual Kafka Brokers"
 echo ""

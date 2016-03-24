@@ -4,9 +4,19 @@ CLUSTERNAME=$(ls /mapr)
 ROLE_GUESS=$(echo "$(realpath "$0")"|cut -d"/" -f5)
 
 
-APP_ID_GUESS=$(basename $(dirname `realpath "$0"`))
+APP="mesosui"
 
-APP="kafka-rest"
+re="^[a-z0-9]+$"
+if [[ ! "${APP}" =~ $re ]]; then
+    echo "App name can only be lowercase letters and numbers"
+    exit 1
+fi
+
+APP_ID="mesosuiprod"
+if [[ ! "${APP_ID}" =~ $re ]]; then
+    echo "Instance name can only be lowercase letters and numbers"
+    exit 1
+fi
 
 APP_UP=$(echo $APP | tr '[:lower:]' '[:upper:]')
 
@@ -25,23 +35,21 @@ if [ ! -d "${APP_HOME}" ]; then
     echo "${APP_HOME} does not exist. Are you sure your ${APP} instance ${APP_ID} is installed properly?"
     exit 1
 fi
-APP_ID_ENV=$(echo ${APP_ID}|tr "-" "_")
-cd ${APP_HOME}
 
-$MARATHON_SUBMIT ${APP_ID}.marathon
+$MARATHON_SUBMIT ${APP_HOME}/${APP_ID}.marathon
 
-TWEB="ZETA_KAFKAREST_${APP_ID_ENV}_HOST"
-TPORT="ZETA_KAFKAREST_${APP_ID_ENV}_PORT"
-eval RWEB=\$$TWEB
+
+THOST="ZETA_${APP_UP}_HOST"
+TPORT="ZETA_${APP_UP}_PORT"
+
+eval RHOST=\$$THOST
 eval RPORT=\$$TPORT
 
-echo ""
-echo ""
-echo "Your ${APP} Instance is running:"
-echo "The Rest API lives here: http://${RWEB}:${RPORT}"
-echo ""
-echo ""
 
-
-
+echo ""
+echo ""
+echo "Your ${APP} Instance is running"
+echo "It can be found: http://${RHOST}:${RPORT}"
+echo ""
+echo ""
 

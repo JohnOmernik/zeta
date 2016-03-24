@@ -1,10 +1,16 @@
 #!/bin/bash
 
-APP="mesos-ui"
+APP="mesosui"
+
+re="^[a-z0-9]+$"
+if [[ ! "${APP}" =~ $re ]]; then
+    echo "App name can only be lowercase letters and numbers"
+    exit 1
+fi
 
 MESOS_ROLE="prod"
 
-echo "mesos-ui must be installed to prod"
+echo "${APP} must be installed to prod"
 
 CLUSTERNAME=$(ls /mapr)
 
@@ -24,19 +30,19 @@ fi
 echo "Making Directories for ${APP}"
 mkdir -p ${APP_ROOT}
 
-cp get_mesos-ui_release.sh ${APP_ROOT}/
+cp get_mesosui_release.sh ${APP_ROOT}/
 cp install_instance.sh ${APP_ROOT}/
 cp start_instance.sh ${APP_ROOT}/
 
-chmod +x ${APP_ROOT}/get_mesos-ui_release.sh
+chmod +x ${APP_ROOT}/get_mesosui_release.sh
 chmod +x ${APP_ROOT}/install_instance.sh
 
 
 echo ""
 echo ""
-echo "mesos-ui files installed to ${MESOS_ROLE}"
+echo "mesosui files installed to ${MESOS_ROLE}"
 echo "Now build the docker file with:"
-echo "> ${APP_ROOT}/get_mesos-ui_release.sh"
+echo "> ${APP_ROOT}/get_mesosui_release.sh"
 echo ""
 echo ""
 
