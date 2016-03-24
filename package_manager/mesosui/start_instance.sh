@@ -22,7 +22,7 @@ APP_UP=$(echo $APP | tr '[:lower:]' '[:upper:]')
 
 read -e -p "We autodetected the Mesos Role as ${ROLE_GUESS}. Please enter the Mesos role to use for this instance install: " -i $ROLE_GUESS MESOS_ROLE
 
-read -e -p "We autodetected the instance for ${APP} startup to be ${APP_ID_GUESS}. Please enter the instance name for ${APP} startup: " -i ${APP_ID_GUESS} APP_ID
+read -e -p "We autodetected the instance for ${APP} startup to be ${APP_ID_GUESS}. Please enter the instance name for ${APP} startup: " -i ${APP_ID} APP_ID
 
 APP_ROOT="/mapr/$CLUSTERNAME/mesos/${MESOS_ROLE}/${APP}"
 APP_HOME="${APP_ROOT}/${APP_ID}"

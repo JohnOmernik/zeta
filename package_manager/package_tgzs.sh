@@ -12,7 +12,7 @@ if [ ! -d "$PKG_DIR" ]; then
     mkdir $PKG_DIR
 fi
 
-
+rm ${PKG_DIR}/*
 for D in `find . -maxdepth 1 -type d`
 do
     if [ "$D" != "." ]; then
