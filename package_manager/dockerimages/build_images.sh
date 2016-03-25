@@ -1,29 +1,15 @@
 #!/bin/bash
 
-
-
 CLUSTERNAME=$(ls /mapr)
-
-ROLE_GUESS=$(echo "$(realpath "$0")"|cut -d"/" -f5)
-
 APP="dockerimages"
+APP_ID="dockerimagebase"
 
-re="^[a-z0-9]+$"
+. /mapr/${CLUSTERNAME}/mesos/kstore/zeta_inc/zetaincludes/inc_general.sh
 
-if [[ ! "${APP}" =~ $re ]]; then
-    echo "App name can only be lowercase letters and numbers"
-    exit 1
-fi
-read -e -p "We autodetected the Mesos Role as ${ROLE_GUESS}. Please enter the Mesos role to use for this instance install: " -i $ROLE_GUESS MESOS_ROLE
-
-APP_ROOT="/mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/${APP}"
-
-# Source role files for info and secrets
-. /mapr/$CLUSTERNAME/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
 
 REG="${ZETA_DOCKER_REG_URL}"
 
-cd ${APP_ROOT}
+cd ${APP_HOME}
 
 IMAGES="minopenjdk7 minjdk8 minpython2 rsyncbase minopenjre7 minopenjdk7mvn333 minjdk8mvn333 minnpm minnpmgulppython"
 
@@ -38,6 +24,6 @@ done
 echo ""
 echo ""
 echo "Docker Base Images were built and pushed to registry at ${REG}"
-echo "You can always do it again by running ${APP_ROOT}/build_images.sh"
+echo "You can always do it again by running ${APP_HOME}/build_images.sh"
 echo ""
 

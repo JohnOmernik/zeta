@@ -2,9 +2,9 @@
 
 CLUSTERNAME=$(ls /mapr)
 
-ROLE_GUESS=$(echo "$(realpath "$0")"|cut -d"/" -f5)
-
 APP="kafka"
+
+ROLE_GUESS=$(echo "$(realpath "$0")"|cut -d"/" -f5)
 
 re="^[a-z0-9]+$"
 if [[ ! "${APP}" =~ $re ]]; then
@@ -27,7 +27,6 @@ read -e -p "Please enter the $APP Version you wish to install this instance with
 
 MARATHON_SUBMIT="/home/zetaadm/zetaadmin/marathon${MESOS_ROLE}_submit.sh"
 
-cd "$(dirname "$0")"
 
 APP_ROOT="/mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/${APP}"
 APP_HOME="${APP_ROOT}/${APP_ID}"
@@ -59,6 +58,8 @@ if [ ! -f "${APP_ROOT}/${APP}_packages/${APP_VER}.tgz" ]; then
     echo "Please set this up properly per get_${APP}_release.sh"
     exit 1
 fi
+
+cd "$(dirname "$0")"
 
 ###############
 # $APP Specific

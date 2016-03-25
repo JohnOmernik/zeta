@@ -1,9 +1,17 @@
 #!/bin/bash
 
+CLUSTERNAME=$(ls /mapr)
+
 
 WORKING="/tmp"
 PKG_ROOT="/home/zetaadm/zeta_packages"
 ZETA_PKG=$1
+PKG_TEMPLATES="/mapr/${CLUSTERNAME}/mesos/kstore/zeta_inc/"
+
+mkdir -d ${PKG_TEMPLATES}
+
+tar zxf ${PKG_ROOT}/zeta_inst_zetaincludes.tgz -C ${PKG_TEMPLATES}
+
 
 if [ "$ZETA_PKG" == "" ]; then
         echo "No package selected"
