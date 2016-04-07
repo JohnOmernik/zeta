@@ -1,63 +1,32 @@
 #!/bin/bash
-
 CLUSTERNAME=$(ls /mapr)
 
-ROLE_GUESS=$(echo "$(realpath "$0")"|cut -d"/" -f5)
-
 APP="drill"
-re="^[a-z0-9]+$"
-if [[ ! "${APP}" =~ $re ]]; then
-    echo "App name can only be lowercase letters and numbers"
-    exit 1
-fi
-APP_UP=$(echo $APP | tr '[:lower:]' '[:upper:]')
 
-read -e -p "We autodetected the Mesos Role as ${ROLE_GUESS}. Please enter the Mesos role to use for this instance install: " -i $ROLE_GUESS MESOS_ROLE
-
-read -e -p "Please enter the instance name to install under Mesos Role: ${MESOS_ROLE}: " -i "${APP}${MESOS_ROLE}" APP_ID
-
-if [[ ! "${APP_ID}" =~ $re ]]; then
-    echo "App instance can only be lowercase letters and numbers"
-    exit 1
-fi
+. /mapr/${CLUSTERNAME}/mesos/kstore/zeta_inc/zetaincludes/inc_general.sh
 
 
-read -e -p "Please enter the $APP Version you wish to install this instance with: " -i "drill-1.6.0" APP_VER
+##########
+# Note: Template uses Docker Registery as example, you will want to change this
+# Get instance Specifc variables from user.
+echo ""
+echo "Available Versions:"
+ls ${APP_ROOT}/${APP}_packages
+echo ""
+read -e -p "Please enter the $APP Version you wish to install this instance with: " -i "drill-1.6.0.tgz" APP_TGZ
 
-
-cd "$(dirname "$0")"
-
-APP_ROOT="/mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/${APP}"
-APP_HOME="${APP_ROOT}/${APP_ID}"
-
-# Source role files for info and secrets
-. /mapr/$CLUSTERNAME/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
-. /mapr/$CLUSTERNAME/mesos/kstore/$MESOS_ROLE/secret/credential.sh
-
-if [ -d "$APP_HOME" ]; then
-    echo "The Installation Directory already exists at $APP_HOME"
-    echo "Installation will not continue over that, please rename or delete the existing directory to install fresh"
-    exit 1
-fi
-
-if [ -f "/mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP}_${APP_ID}.sh" ]; then
-    echo "env script for $APP_ID exists. Will not proceed until you handle that"
-    echo "/mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP}_${APP_ID}.sh"
-    exit 1
-fi
-
+APP_VER=$(echo -n ${APP_TGZ}|sed "s/\.tgz//")
 PKGS=$(ls ${APP_ROOT}/${APP}_packages/)
 
 if [ "$PKGS" == "" ]; then
     echo "There are no ${APP} packages, please get some first by running get_${APP}_release.sh"
     exit 1
 fi
-if [ ! -f "${APP_ROOT}/${APP}_packages/${APP_VER}.tgz" ]; then
-    echo "The version of ${APP} you want: $APP_VER does not exist in ${APP_ROOT}/${APP}_packages" 
-    echo "Please set this up properly per get_${APP}_release.sh"
+if [ ! -f "${APP_ROOT}/${APP}_packages/${APP_TGZ}" ]; then
+    echo "The version of ${APP} you want: $APP_TGZ does not exist in ${APP_ROOT}/${APP}_packages" 
+    echo "Please set this up properly per get_package.sh"
     exit 1
 fi
-
 
 ###############
 # $APP Specific
@@ -79,10 +48,17 @@ read -e -p "What is the default MapR topology for your data to use for Spill Loc
 read -e -p "How many drillbits should we start by default: " -i "1" APP_CNT
 echo ""
 
+
 mkdir -p ${APP_HOME}
 mkdir -p ${APP_HOME}/log
 mkdir -p ${APP_HOME}/conf.std
 
+cp ${APP_ROOT}/start_instance.sh ${APP_HOME}/
+chmod +x ${APP_HOME}/start_instance.sh
+
+
+##########
+# Highly recommended to create instance specific information to an env file for your Mesos Role
 
 cat > /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP}_${APP_ID}.sh << EOL1
 #!/bin/bash
@@ -93,16 +69,23 @@ export ZETA_${APP_UP}_${APP_ID}_USER_PORT="${APP_USER_PORT}"
 export ZETA_${APP_UP}_${APP_ID}_BIT_PORT="${APP_BIT_PORT}"
 EOL1
 
+##########
+# After it's written we source itSource the script!
+. /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP}_${APP_ID}.sh 
 
+##########
+# Unpack the version into the instance dir
 cd ${APP_ROOT}
-
-tar zxf ./${APP}_packages/${APP_VER}.tgz -C ./${APP_ID}/
+tar zxf ./${APP}_packages/${APP_TGZ} -C ./${APP_ID}/
 cd ${APP_ID}
 
+
+##########
+# Get specific instance related things, 
 ln -s ${APP_HOME}/conf.std ${APP_HOME}/${APP_VER}/conf
-cp ./${APP_VER}/conf_orig/logback.xml ./conf.std/
-cp ./${APP_VER}/conf_orig/mapr.login.conf ./conf.std/
-cp ./${APP_VER}/conf_orig/core-site.xml ./conf.std/
+cp ${APP_HOME}/${APP_VER}/conf_orig/logback.xml ${APP_HOME}/conf.std/
+cp ${APP_HOME}/${APP_VER}/conf_orig/mapr.login.conf ${APP_HOME}/conf.std/
+cp ${APP_HOME}/${APP_VER}/conf_orig/core-site.xml ${APP_HOME}/conf.std/
 
 cat > ${APP_HOME}/conf.std/drill-env.sh << EOF
 # Licensed to the Apache Software Foundation (ASF) under one or more
@@ -127,7 +110,6 @@ APP_ID="${APP_ID}"
 # We are running Drill prod, so source the file
 . /mapr/\${CLUSTERNAME}/mesos/kstore/env/zeta_\${CLUSTERNAME}_\${MESOS_ROLE}.sh
 
-
 echo "Webhost: \${ZETA_DRILL_${APP_ID}_WEB_HOST}:\${ZETA_DRILL_${APP_ID}_WEB_PORT}"
 
 
@@ -137,7 +119,6 @@ DRILL_HEAP="${APP_HEAP_MEM}"
 export SERVER_GC_OPTS="-XX:+CMSClassUnloadingEnabled -XX:+UseG1GC "
 
 export DRILL_JAVA_OPTS="-Xms\$DRILL_HEAP -Xmx\$DRILL_HEAP -XX:MaxDirectMemorySize=\$DRILL_MAX_DIRECT_MEMORY -XX:MaxPermSize=512M -XX:ReservedCodeCacheSize=1G -Ddrill.exec.enable-epoll=true -Djava.library.path=./${APP_VER}/libjpam -Djava.security.auth.login.config=/opt/mapr/conf/mapr.login.conf -Dzookeeper.sasl.client=false"
-
 # Class unloading is disabled by default in Java 7
 # http://hg.openjdk.java.net/jdk7u/jdk7u60/hotspot/file/tip/src/share/vm/runtime/globals.hpp#l1622
 
@@ -234,7 +215,6 @@ drill.exec: {
 }
 EOF2
 
-
 cat > ${APP_HOME}/zetadrill << EOF3
 #!/bin/bash
 
@@ -278,11 +258,12 @@ EOL
 (sleep 10; rm "\$DPROP") & \${DRILL_LOC}/\${DRILL_VER}\${DRILL_BIN} \${DPROP}
 
 EOF3
+
 chmod +x ${APP_HOME}/zetadrill
 
 cat > ${APP_HOME}/${APP_ID}.marathon << EOF4
 {
-"cmd": "./${APP_VER}/bin/runbit --config /mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/${APP}/${APP_ID}/conf.std",
+"cmd": "./${APP_VER}/bin/runbit --config ${APP_HOME}/conf.std",
 "cpus": ${APP_CPU},
 "mem": ${APP_MEM},
 "labels": {
@@ -299,19 +280,22 @@ cat > ${APP_HOME}/${APP_ID}.marathon << EOF4
 "id": "${APP_ID}",
 "user": "mapr",
 "instances": ${APP_CNT},
-"uris": ["file:///mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/${APP}/${APP}_packages/${APP_VER}.tgz"],
+"uris": ["file://${APP_ROOT}/${APP}_packages/${APP_TGZ}"],
 "constraints": [["hostname", "UNIQUE"]]
 }
 EOF4
 
 
-cp ${APP_ROOT}/start_instance.sh ${APP_HOME}/
-chmod +x ${APP_HOME}/start_instance.sh
 
-echo ""
-echo ""
-echo "Your instances ${APP_ID} is installed to ${APP_HOME}"
-echo "No go to to ${APP_HOME} and run start_instance.sh to submit to Marathon"
-echo ""
-echo ""
 
+
+##########
+# Provide instructions for next steps
+echo ""
+echo ""
+echo "$APP instance ${APP_ID} installed at ${APP_HOME} and ready to go"
+echo "To start please run: "
+echo ""
+echo "> ${APP_HOME}/start_instance.sh"
+echo ""
+echo ""

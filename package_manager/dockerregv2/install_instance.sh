@@ -7,13 +7,19 @@ CLUSTERNAME=$(ls /mapr)
 
 read -e -p "Please enter the port Docker Registry should run on: " -i "5000" APP_PORT
 
-mkdir -p ${APP_HOME}/dockerdata # Change this to a volume create.
+#Create Docker data Directory as MapR Volume
+VOL="${APP_ID}.dockerdata"
+MNT="/${APP_DIR}/${MESOS_ROLE}/${APP}/${APP_ID}/dockerdata"
+sudo maprcli volume create -name $VOL -path $MNT -rootdirperms 775 -user zetaadm:fc,a,dump,restore,m,d
+sudo chown  zetaadm:zetaadm ${APP_HOME}/dockerdata
+
+
 cp ${APP_ROOT}/start_instance.sh ${APP_HOME}/
 chmod +x ${APP_HOME}/start_instance.sh
 
 
 # WRITE Env File for Docker Register V2 into sourced scripts
-cat > /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP_ID}.sh << EOL1
+cat > /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP}_${APP_ID}.sh << EOL1
 #!/bin/bash
 export ZETA_DOCKER_REG_ID="${APP_ID}"
 export ZETA_DOCKER_REG_PORT="${APP_PORT}"
@@ -21,7 +27,7 @@ export ZETA_DOCKER_REG_URL="\${ZETA_DOCKER_REG_ID}.\${ZETA_MARATHON_ENV}.\${ZETA
 EOL1
 
 # Source the script!
-. /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP_ID}.sh 
+. /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP}_${APP_ID}.sh 
 
 
 

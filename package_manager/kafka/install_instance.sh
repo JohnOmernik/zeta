@@ -1,82 +1,36 @@
 #!/bin/bash
-
 CLUSTERNAME=$(ls /mapr)
 
 APP="kafka"
 
-ROLE_GUESS=$(echo "$(realpath "$0")"|cut -d"/" -f5)
-
-re="^[a-z0-9]+$"
-if [[ ! "${APP}" =~ $re ]]; then
-    echo "App name can only be lowercase letters and numbers"
-    exit 1
-fi
-
-APP_UP=$(echo $APP | tr '[:lower:]' '[:upper:]')
-
-read -e -p "We autodetected the Mesos Role as ${ROLE_GUESS}. Please enter the Mesos role to use for this instance install: " -i $ROLE_GUESS MESOS_ROLE
-
-read -e -p "Please enter the instance name to install under Mesos Role: ${MESOS_ROLE}: " -i "${APP}${MESOS_ROLE}" APP_ID
-
-if [[ ! "${APP_ID}" =~ $re ]]; then
-    echo "App instance name can only be lowercase letters and numbers"
-    exit 1
-fi
-
-read -e -p "Please enter the $APP Version you wish to install this instance with: " -i "kafka-mesos-0.9.5.0" APP_VER
-
-MARATHON_SUBMIT="/home/zetaadm/zetaadmin/marathon${MESOS_ROLE}_submit.sh"
+. /mapr/${CLUSTERNAME}/mesos/kstore/zeta_inc/zetaincludes/inc_general.sh
 
 
-APP_ROOT="/mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/${APP}"
-APP_HOME="${APP_ROOT}/${APP_ID}"
+##########
+# Note: Template uses Docker Registery as example, you will want to change this
+# Get instance Specifc variables from user.
 
-# Source role files for info and secrets
-. /mapr/$CLUSTERNAME/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
-. /mapr/$CLUSTERNAME/mesos/kstore/$MESOS_ROLE/secret/credential.sh
+echo "Here is the list of available ${APP} packages: please select one to install this instance with"
+ls -ls ${APP_ROOT}/${APP}_packages/
 
-if [ -d "$APP_HOME" ]; then
-    echo "The Installation Directory already exists at $APP_HOME"
-    echo "Installation will not continue over that, please rename or delete the existing directory to install fresh"
-    exit 1
-fi
+read -e -p "Please enter the $APP Version you wish to install this instance with: " -i "kafka-mesos-0.9.5.0.tgz" APP_TGZ
+read -e -p "Please enter the port for ${APP} API to run on for ${APP_ID}: " -i "21000" APP_PORT
 
-if [ -f "/mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP}_${APP_ID}.sh" ]; then
-    echo "env script for $APP_ID exists. Will not proceed until you handle that"
-    echo "/mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP}_${APP_ID}.sh"
-    exit 1
-fi
+APP_MEM="768" # This could be read in if you want the user to have control for your app
+APP_CPU="1" # This could be read in you want the user to have control for your app
 
-PKGS=$(ls ${APP_ROOT}/${APP}_packages/)
-
-if [ "$PKGS" == "" ]; then
-    echo "There are no ${APP} packages, please get some first by running get_${APP}_release.sh"
-    exit 1
-fi
-if [ ! -f "${APP_ROOT}/${APP}_packages/${APP_VER}.tgz" ]; then
-    echo "The version of ${APP} you want: $APP_VER does not exist in ${APP_ROOT}/${APP}_packages" 
-    echo "Please set this up properly per get_${APP}_release.sh"
-    exit 1
-fi
-
-cd "$(dirname "$0")"
-
-###############
-# $APP Specific
-read -e -p "Please enter the port for the kafka-mesos api to run on for ${APP_ID}: " -i 21000 APP_PORT
-
-
-echo "Making ${APP} instance directories for ${APP_ID}"
-mkdir -p ${APP_HOME}
+##########
+# Do instance specific things: Create Dirs, copy start files, make executable etc
 cd ${APP_HOME}
+cp ${APP_ROOT}/${APP}_packages/${APP_TGZ} ${APP_HOME}/
+tar zxf ./${APP_TGZ}
+cp ${APP_ROOT}/start_instance.sh ${APP_HOME}
+chmod +x ${APP_HOME}/start_instance.sh
 
-cp ${APP_ROOT}/${APP}_packages/${APP_VER}.tgz ${APP_HOME}/
-tar zxf ./${APP_VER}.tgz
 
-
-cp ${APP_ROOT}/initial_broker_setup.sh ${APP_HOME}/
-chmod +x ${APP_HOME}/initial_broker_setup.sh
-
+##########
+# Highly recommended to create instance specific information to an env file for your Mesos Role
+# Exampe ENV File for Docker Register V2 into sourced scripts
 
 cat > /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP}_${APP_ID}.sh << EOL1
 #!/bin/bash
@@ -85,9 +39,13 @@ export ZETA_${APP_UP}_${APP_ID}_ZK="\${ZETA_ZK}/${APP_ID}"
 export ZETA_${APP_UP}_${APP_ID}_API_PORT="${APP_PORT}"
 EOL1
 
-. /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP}_${APP_ID}.sh
+##########
+# After it's written we source it!
+. /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP}_${APP_ID}.sh 
 
-# Create config file
+
+##########
+# Get specific instance related things, 
 
 cat > ${APP_HOME}/kafka-mesos.properties << EOF
 # Scheduler options defaults. See ./kafka-mesos.sh help scheduler for more details
@@ -111,39 +69,34 @@ secret=${ROLE_PASS}
 
 EOF
 
-# Create Marathon File
+##########
+# Create a marathon file if appropriate in teh ${APP_HOME} directory
+
 cat > ${APP_HOME}/${APP_ID}.marathon << EOF2
 {
 "id": "${APP_ID}",
 "instances": 1,
-"cmd": "./kafka-mesos.sh scheduler /mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/${APP}/${APP_ID}/kafka-mesos.properties",
-"cpus": 1,
-"mem": 768,
+"cpus": ${APP_CPU},
+"mem": ${APP_MEM},
+"cmd": "./kafka-mesos.sh scheduler ${APP_HOME}/kafka-mesos.properties",
 "ports":[],
 "labels": {
     "PRODUCTION_READY":"True",
     "ZETAENV":"${MESOS_ROLE}",
     "CONTAINERIZER":"Mesos"
 },
-"uris": ["file:///mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/${APP}/${APP_ID}/${APP_VER}.tgz"]
+"uris": ["file://${APP_HOME}/${APP_TGZ}"]
 }
 
 EOF2
 
-
-echo ""
-echo "Submitting to Marathon:"
-echo ""
-$MARATHON_SUBMIT ${APP_HOME}/${APP_ID}.marathon
+##########
+# Provide instructions for next steps
 echo ""
 echo ""
-
-
-
-echo "${APP} instance ${APP_ID} installed to ${APP_HOME}"
-echo " Please go to ${APP_HOME} and run initial_broker_setup.sh  to configure actual Kafka Brokers"
+echo "$APP instance ${APP_ID} installed at ${APP_HOME} and ready to go"
+echo "To start please run: "
 echo ""
-echo "> cd ${APP_HOME}"
-echo "> ./initial_broker_setup.sh"
-
-
+echo "> ${APP_HOME}/start_instance.sh"
+echo ""
+echo ""

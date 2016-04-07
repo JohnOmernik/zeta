@@ -1,57 +1,56 @@
 #!/bin/bash
 
-APP="%YOURAPPNAME%"  # App names must be all lowercase and only contain letters or numbers
+###########
+# Basic Variables
 
-re="^[a-z0-9]+$"
-if [[ ! "${APP}" =~ $re ]]; then
-    echo "App name can only be lowercase letters and numbers"
-    exit 1
-fi
+CLUSTERNAME=$(ls /mapr) # Get your cluster name
 
-read -e -p "Please enter the Mesos Role you wish to install ${APP} to: " -i "prod" MESOS_ROLE
+APP="%YOURAPPNAME%" # You do want to set this here so change this variable
 
-CLUSTERNAME=$(ls /mapr)
+APP_DIR="mesos"  # Most things fall into mesos. This is a suggestion, it will still prompt the user 
 
+
+###########
+# Put in checks here for other packages you need to have installed. 
+#
+#
+
+###########
+# Load the install include file
+. /mapr/${CLUSTERNAME}/mesos/kstore/zeta_inc/zetaincludes/inc_zeta_install.sh
+
+###########
+# CD to the temp location where this script is run from 
 cd "$(dirname "$0")"
 
-. /mapr/$CLUSTERNAME/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
+###########
+# Copy files to their proper locations:. ${APP_ROOT} is set in the includes
 
-APP_ROOT="/mapr/$CLUSTERNAME/mesos/$MESOS_ROLE/${APP}"
-##########
-# Check if install has already occured
-if [ -d "${APP_ROOT}" ]; then
-    echo "The Installation Directory already exists at ${APP_ROOT}"
-    echo "Installation will not continue over that, please rename or delete the existing directory to install fresh"
-    exit 1
-fi
+cp ./install_instance.sh ${APP_ROOT}/
+cp ./get_package.sh ${APP_ROOT}/
+cp ./start_instance.sh ${APP_ROOT}/
 
-##########
-# Check here for any other packages that need to be installed. Exit and notifiy if the pre-reqs aren't met
-
-##########
-# Make directories
-echo "Making Directories for ${APP}"
-mkdir -p ${APP_ROOT}
-# Create any more directories your package needs
-
-##########
-# Move scripts to the install location (${APP_ROOT})
-cp install_instance.sh  ${APP_ROOT}/
-# Copy any more scripts your package needs
-
-##########
-# Make only those scripts executable that are needed for the next step. (i.e. install_instance should exe, but start instance should only be made exe by install instance etc)
+###########
+# Only make executable the next steps. 
 chmod +x ${APP_ROOT}/install_instance.sh
+chmod +x ${APP_ROOT}/get_package.sh
 
-##########
-# Provide instructions for the next step including where things were installed
+###########
+# Provide instructions you can/change this per install. 
+echo ""
+echo ""
+echo "${APP} installed to role ${MESOS_ROLE} at ${APP_ROOT}"
+echo "Next steps, get/build/compile what will be run by executing:"
+echo ""
+echo "${APP_ROOT}/get_package.sh"
+echo ""
+echo "Then you can install individual instances by running:"
+echo ""
+echo "> ${APP_ROOT}/install_instance.sh"
+echo ""
+echo ""
 
-echo ""
-echo ""
-echo "${APP} Package installed to ${MESOS_ROLE}. Next steps:"
-echo ""
-echo "1. Make some ${APP} tgzs to run in Zeta with ${APP_ROOT}/get_${APP}_release.sh"
-echo "2. Install a specific ${APP} instance with ${APP_ROOT}/install_instance.sh"
-echo ""
-echo ""
+
+
+
 

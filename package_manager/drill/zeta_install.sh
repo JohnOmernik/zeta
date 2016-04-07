@@ -1,55 +1,63 @@
 #!/bin/bash
 
-APP="drill"
+###########
+# Basic Variables
 
-re="^[a-z0-9]+$"
+CLUSTERNAME=$(ls /mapr) # Get your cluster name
 
-if [[ ! "${APP}" =~ $re ]]; then
-    echo "App name can only be lowercase letters and numbers"
-    exit 1
-fi
+APP="drill" # You do want to set this here so change this variable
 
-read -e -p "Please enter the Mesos Role you wish to install ${APP} to: " -i "prod" MESOS_ROLE
+APP_DIR="mesos"  # Most things fall into mesos. This is a suggestion, it will still prompt the user 
 
-CLUSTERNAME=$(ls /mapr)
 
+###########
+# Put in checks here for other packages you need to have installed. 
+#
+#
+
+###########
+# Load the install include file
+. /mapr/${CLUSTERNAME}/mesos/kstore/zeta_inc/zetaincludes/inc_zeta_install.sh
+
+###########
+# CD to the temp location where this script is run from 
 cd "$(dirname "$0")"
 
-. /mapr/$CLUSTERNAME/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
-
-APP_ROOT="/mapr/$CLUSTERNAME/mesos/$MESOS_ROLE/${APP}"
-
-if [ -d "${APP_ROOT}" ]; then
-    echo "The Installation Directory already exists at ${APP_ROOT}"
-    echo "Installation will not continue over that, please rename or delete the existing directory to install fresh"
-    exit 1
-fi
-
-echo "Making Directories for ${APP}"
-mkdir -p ${APP_ROOT}
+###########
+# Copy files to their proper locations:. ${APP_ROOT} is set in the includes
 mkdir -p ${APP_ROOT}/${APP}_packages
 mkdir -p ${APP_ROOT}/extrajars
-
-cp -R ./libjpam ${APP_ROOT}/
-
 # Add Readme to extrajars
 echo "Place extra jars in this folder including storage plugin jars, or udf jars" > ${APP_ROOT}/extrajars/README.txt
 
+mkdir -p ${APP_ROOT}/libjpam
 
-cp get_drill_release.sh ${APP_ROOT}/
-cp install_instance.sh  ${APP_ROOT}/
-cp start_instance.sh ${APP_ROOT}/
+cp /opt/mapr/lib/libjpam.so ${APP_ROOT}/libjpam/
+cp ./install_instance.sh ${APP_ROOT}/
+cp ./get_package.sh ${APP_ROOT}/
+cp ./start_instance.sh ${APP_ROOT}/
 
-
-chmod +x ${APP_ROOT}/get_drill_release.sh
+###########
+# Only make executable the next steps. 
 chmod +x ${APP_ROOT}/install_instance.sh
+chmod +x ${APP_ROOT}/get_package.sh
+
+###########
+# Provide instructions you can/change this per install. 
+echo ""
+echo ""
+echo "${APP} installed to role ${MESOS_ROLE} at ${APP_ROOT}"
+echo "Next steps, get/build/compile what will be run by executing:"
+echo ""
+echo "${APP_ROOT}/get_package.sh"
+echo ""
+echo "Then you can install individual instances by running:"
+echo ""
+echo "> ${APP_ROOT}/install_instance.sh"
+echo ""
+echo ""
 
 
-echo ""
-echo "${APP} Package installed to ${MESOS_ROLE}. Next steps:"
-echo ""
-echo "1. Make some ${APP} tgzs to run in Zeta with ${APP_ROOT}/get_${APP}_release.sh"
-echo "2. Install a specific ${APP} instance with ${APP_ROOT}/install_instance.sh"
-echo "3. Configure your setup with ${APP_ROOT}/\$YOUR_INSTANCE/configure_instance.sh"
-echo ""
+
+
 
