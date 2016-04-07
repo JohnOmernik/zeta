@@ -21,7 +21,7 @@ Zeta-Cluster.template
 # There are packages that exist, to not clutter the git, these are all buildable.  Thus ignore tgz files.
 # There may be tgz in the actual packages (say zeta_packages/mypackage/foo.tgz) we don't ignore that
 # However as the readme will say here, let's try not to have tgzs there if at all possible. 
-/package_manager/zeta_packages/*.tgz
-/package_manager/*.tgz
-/zeta_packages/*.tgz
 *.tgz
+*.tar.gz
+*.final
+encrypt.pub

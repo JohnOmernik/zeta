@@ -8,36 +8,45 @@
 #########################
 # Need one external host to connect to upload scripts etc.
 # This should be the IP address of the node to do the install from. In AWS, just pick a node and send it along
-IHOST="127.0.0.1"
+IHOST="<ip_address>"
+#IHOST_PORT="22" # Default SSH port
 
 #########################
 # IUSER is the initial user to work with. in EC2, this is the AMI user. With the PRVKEY settings, this user should be able to SSH to all hosts in the cluster
+#IUSER="ec2-user"
 IUSER="ec2-user"
 
 #########################
 # PRVKEY is the the key for ssh to all nodes
 # This is copied to the install host as /home/$IUSER/.ssh/id_rsa
-PRVKEY="./yourkey.pem"
+PRVKEY="/Users/${USER}/.ssh/<value>.pem"
 
 #########################
 # This is the domain that mesos-dns will handle. Defaults to mesos.
-MESOS_DOMAIN="mesos"
+#MESOS_DOMAIN="mesos"
 
 #########################
 # This is the version of Mesos to download from Apache, build and install
-MESOS_VER="0.27.2"
-MESOS_RPM_ROOT="http://repos.mesosphere.com/el/7/x86_64/RPMS/"
-MESOS_RPM="mesos-0.27.2-2.0.15.centos701406.x86_64.rpm"
+#MESOS_VER="0.27.2"
+#MESOS_RPM_ROOT="http://repos.mesosphere.com/el/7/x86_64/RPMS/"
+#MESOS_RPM="mesos-0.27.2-2.0.15.centos701406.x86_64.rpm"
 
 #########################
 # I don't like putting passwords in file like this.
 # This will be evolving as we learn more about Mesos ACLs etc.
 # Remember to change these.
 MESOS_AGENT_USER="zetaagents"
-MESOS_AGENT_PASS="thepasswordforzetaagents"
 MESOS_PROD_PRNCPL="zetaprodcontrol"
-MESOS_PROD_PASS="anawesomeprodcontrolpassword"
 MESOS_DEV_PRNCPL="zetadevcontrol"
-MESOS_DEV_PASS="anawesomedevcontrolpassword"
 
+#MESOS_AGENT_PASS="thepasswordforzetaagents"
+#MESOS_PROD_PASS="anawesomeprodcontrolpassword"
+#MESOS_DEV_PASS="anawesomedevcontrolpassword"
+#MAPR_HOME="/opt/mapr"
+#MAPR_UID="2000"
+#MAPR_USER="mapr"
+#MAPR_GROUP="mapr"
+#ZETAADM_UID="2000"
+#ZETAADM_USER="zetaadm"
+#ZETAADM_GROUP="zetaadm"
 

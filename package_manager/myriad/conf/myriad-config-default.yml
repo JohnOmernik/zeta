@@ -1,0 +1,92 @@
+##
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+##
+
+# Address of the mesos master - <IP:port> or ZooKeeper path
+mesosMaster: zk://c-atl1ctupoc04.ctu-fo.srsman.secureworks.net:5181,c-atl1ctupoc05.ctu-fo.srsman.secureworks.net:5181,c-atl1ctupoc07.ctu-fo.srsman.secureworks.net:5181/mesosha
+
+# Whether to check point myriad's mesos framework or not
+checkpoint: false
+
+# Myriad's mesos framework failover timeout in milliseconds. This tells mesos
+# to expect myriad would failover within this time interval.
+frameworkFailoverTimeout: 1800
+
+frameworkName: myriadprod
+frameworkRole: 
+frameworkUser: mapr     # User the Node Manager runs as, required if nodeManagerURI set, otherwise defaults to the user
+                          # running the resource manager.
+frameworkSuperUser: mapr  # To be depricated, currently permissions need set by a superuser due to Mesos-1790.  Must be
+                          # root or have passwordless sudo. Required if nodeManagerURI set, ignored otherwise.
+
+nativeLibrary: /usr/local/lib/libmesos.so
+
+# Address of the ZK ensemble (separate by comma, if multiple zk servers are used)
+zkServers: c-atl1ctupoc04.ctu-fo.srsman.secureworks.net:5181,c-atl1ctupoc05.ctu-fo.srsman.secureworks.net:5181,c-atl1ctupoc07.ctu-fo.srsman.secureworks.net:5181
+
+# ZK Session timeout
+zkTimeout: 20000
+
+
+# Port for Rest API
+restApiPort: 8192
+
+# The node manager profiles. The REST API to flex up expects one of the profiles defined here.
+# Admin can define custom profiles (requires restart of Resource Manager)
+profiles:
+  zero:
+    cpu: 0
+    mem: 0
+  tiny:
+    cpu: 1
+    mem: 2048
+  small:
+    cpu: 2
+    mem: 4096
+  medium:
+    cpu: 4
+    mem: 8192
+  large:
+    cpu: 8
+    mem: 16384
+  huge:
+    cpu: 16
+    mem: 32768
+
+nmInstances: # NMs to start with. Requires at least 1 NM with a non-zero profile.
+  medium: 1 # <profile_name : instances>
+
+rebalancer: false
+
+haEnabled: false
+nodemanager:
+  jvmMaxMemoryMB: 1024
+  cpus: 0.2
+  cgroups: false
+
+executor:
+  jvmMaxMemoryMB: 256
+  nodeManagerUri: file:///mapr/zetapoc/mesos/prod/myriad/hadoop-2.7.0.tgz
+  path: file:///mapr/zetapoc/mesos/prod/myriad/executor/myriad-executor-runnable-0.1.0.jar
+
+yarnEnvironment:
+  YARN_HOME: hadoop-2.7.0
+  YARN_NODEMANAGER_OPTS: "-Dnodemanager.resource.io-spindles=4.0 -Dmapr.host=$(hostname -f)" # Required only if using MapR's Hadoop
+  
+mesosAuthenticationPrincipal: zetaprodcontrol
+mesosAuthenticationSecretFilename: /mapr/zetapoc/mesos/kstore/prod/myriad/mesossecret.txt
