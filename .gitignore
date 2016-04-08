@@ -7,10 +7,10 @@ zetafun/
 # Try to protect (mainly myself) but others from including credential info
 *.pem
 id_rsa
-id_rsa.pub
+*.pub
 **/*.pem
 **/id_rsa
-**/id_rsa.pub
+**/*.pub
 
 # cluster.conf will be ignore, we will include a cluster.conf.template that will not be ignored
 # Other files that may exist in my working that won't be included. 
@@ -22,6 +22,10 @@ Zeta-Cluster.template
 # There may be tgz in the actual packages (say zeta_packages/mypackage/foo.tgz) we don't ignore that
 # However as the readme will say here, let's try not to have tgzs there if at all possible. 
 *.tgz
-*.tar.gz
 *.final
-encrypt.pub
+/package_manager/zeta_packages/*.tgz
+/package_manager/*.tgz
+/zeta_packages/*.tgz
+
+
+
