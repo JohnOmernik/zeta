@@ -1,27 +1,58 @@
 #!/bin/bash
 
-MESOS_ROLE="prod"
+###########
+# Basic Variables
 
-CLUSTERNAME=$(ls /mapr)
+CLUSTERNAME=$(ls /mapr) # Get your cluster name
 
-cd "$(dirname "$0")"
+APP="kafkamanager" # You do want to set this here so change this variable
 
-echo "This package is not ready exiting..."
-exit 1
-
-
-. /mapr/$CLUSTERNAME/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
+APP_DIR="mesos"  # Most things fall into mesos. This is a suggestion, it will still prompt the user 
 
 
-INST_DIR="/mapr/$CLUSTERNAME/mesos/$MESOS_ROLE/kafka-manager"
+###########
+# Load the install include file
+. /mapr/${CLUSTERNAME}/mesos/kstore/zeta_inc/zetaincludes/inc_zeta_install.sh
 
-if [ -d "$INST_DIR" ]; then
-    echo "The Installation Directory already exists at $INST_DIR"
-    echo "Installation will not continue over that, please rename or delete the existing directory to install fresh"
+if [ ! -d "/mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/kafka" ]; then
+    echo "kafka is required for ${APP}"
+    echo "exiting"
+    rm -rf ${APP_ROOT}
     exit 1
 fi
-echo "Making Directories for kafka"
-mkdir -p ${INST_DIR}
+
+
+###########
+# CD to the temp location where this script is run from 
+cd "$(dirname "$0")"
+
+###########
+# Copy files to their proper locations:. ${APP_ROOT} is set in the includes
+
+cp ./install_instance.sh ${APP_ROOT}/
+cp ./get_package.sh ${APP_ROOT}/
+cp ./start_instance.sh ${APP_ROOT}/
+
+###########
+# Only make executable the next steps. 
+chmod +x ${APP_ROOT}/install_instance.sh
+chmod +x ${APP_ROOT}/get_package.sh
+
+###########
+# Provide instructions you can/change this per install. 
+echo ""
+echo ""
+echo "${APP} installed to role ${MESOS_ROLE} at ${APP_ROOT}"
+echo "Next steps, get/build/compile what will be run by executing:"
+echo ""
+echo "${APP_ROOT}/get_package.sh"
+echo ""
+echo "Then you can install individual instances by running:"
+echo ""
+echo "> ${APP_ROOT}/install_instance.sh"
+echo ""
+echo ""
+
 
 
 
