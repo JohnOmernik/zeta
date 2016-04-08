@@ -1,43 +1,56 @@
 #!/bin/bash
 
-APP="confluentbase"
+###########
+# Basic Variables
 
-re="^[a-z0-9]+$"
+CLUSTERNAME=$(ls /mapr) # Get your cluster name
 
-if [[ ! "${APP}" =~ $re ]]; then
-    echo "App name can only be lowercase letters and numbers"
+APP="confluentbase" # You do want to set this here so change this variable
+
+APP_DIR="mesos"  # Most things fall into mesos. This is a suggestion, it will still prompt the user 
+
+###########
+# Load the install include file
+. /mapr/${CLUSTERNAME}/mesos/kstore/zeta_inc/zetaincludes/inc_zeta_install.sh
+
+if [ ! -d "/mapr/$CLUSTERNAME/mesos/${MESOS_ROLE}/dockerimages" ]; then
+    echo "The package dockerimages must be installed"
+    echo "Exiting"
+    rm -rf ${APP_ROOT}
     exit 1
 fi
 
-read -e -p "Please enter the Mesos Role you wish to install ${APP} to: " -i "prod" MESOS_ROLE
 
-CLUSTERNAME=$(ls /mapr)
-
+###########
+# CD to the temp location where this script is run from 
 cd "$(dirname "$0")"
 
-. /mapr/$CLUSTERNAME/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
+mkdir -p ${APP_ROOT}/${APP}_packages/dockerbuild
 
+###########
+# Copy files to their proper locations:. ${APP_ROOT} is set in the includes
 
-APP_ROOT="/mapr/$CLUSTERNAME/mesos/$MESOS_ROLE/${APP}"
+cp ./install_instance.sh ${APP_ROOT}/
+cp ./get_package.sh ${APP_ROOT}/
+cp ./start_instance.sh ${APP_ROOT}/
 
-if [ -d "${APP_ROOT}" ]; then
-    echo "The Installation Directory already exists at ${APP_ROOT}"
-    echo "Installation will not continue over that, please rename or delete the existing directory to install fresh"
-    exit 1
-fi
+###########
+# Only make executable the next steps. 
+chmod +x ${APP_ROOT}/install_instance.sh
+chmod +x ${APP_ROOT}/get_package.sh
 
-echo "Making Directories for ${APP}"
-mkdir -p ${APP_ROOT}
-mkdir -p ${APP_ROOT}/dockerbuild
-
-cp build_docker.sh ${APP_ROOT}/
-
-chmod +x ${APP_ROOT}/build_docker.sh
-
+###########
+# Provide instructions you can/change this per install. 
 echo ""
 echo ""
-echo "Confluent Base Docker Image build scripts installed to ${APP_ROOT}"
-echo "To build and push to Docker Registry, execute ${APP_ROOT}/build.docker.sh"
-echo "> ${APP_ROOT}/build_docker.sh"
+echo "${APP} installed to role ${MESOS_ROLE} at ${APP_ROOT}"
+echo "Next steps, get/build/compile what will be run by executing:"
+echo ""
+echo "${APP_ROOT}/get_package.sh"
 echo ""
 echo ""
+
+
+
+
+

@@ -23,10 +23,18 @@ mkdir -p ${WORK_DIR}/${APP}
 cd ${WORK_DIR}/${APP}
 
 mkdir -p ${APP_ROOT}/${APP}_packages
-mkdir -p ${APP_ROOT}/${APP}_packages/zep_build
-mkdir -p ${APP_ROOT}/${APP}_packages/zep_run
 
-echo "Create Dockerfile for building Zeppelin"
+BUILD="Y"
+
+if [ -d "${APP_ROOT}/${APP}_packages/zep_build" ]; then
+    read -e -p "Looks like the dockerfile was already here. Do you want to rebuild? " -i "N" BUILD
+fi
+
+if [ "$BUILD" == "Y" ]; then
+    mkdir -p ${APP_ROOT}/${APP}_packages/zep_build
+    mkdir -p ${APP_ROOT}/${APP}_packages/zep_run
+
+    echo "Create Dockerfile for building Zeppelin"
 cat > ${APP_ROOT}/${APP}_packages/zep_build/Dockerfile << EOF
 FROM ${ZETA_DOCKER_REG_URL}/ubuntu1404
 
@@ -46,18 +54,18 @@ CMD ["python -V"]
 EOF1
 
 
-echo "Building, tagging, and pushing Zeppeling run and build images"
-cd ${APP_ROOT}/${APP}_packages/zep_build/
-APP_BUILD_IMG="${ZETA_DOCKER_REG_URL}/zep_build"
-APP_RUN_IMG="${ZETA_DOCKER_REG_URL}/zep_run"
-sudo docker build -t ${APP_BUILD_IMG} .
+    echo "Building, tagging, and pushing Zeppeling run and build images"
+    cd ${APP_ROOT}/${APP}_packages/zep_build/
+    APP_BUILD_IMG="${ZETA_DOCKER_REG_URL}/zep_build"
+    APP_RUN_IMG="${ZETA_DOCKER_REG_URL}/zep_run"
+    sudo docker build -t ${APP_BUILD_IMG} .
 
-cd ${APP_ROOT}/${APP}_packages/zep_run
-sudo docker build -t ${APP_RUN_IMG} .
+    cd ${APP_ROOT}/${APP}_packages/zep_run
+    sudo docker build -t ${APP_RUN_IMG} .
 
-sudo docker push ${APP_BUILD_IMG}
-sudo docker push ${APP_RUN_IMG}
-
+    sudo docker push ${APP_BUILD_IMG}
+    sudo docker push ${APP_RUN_IMG}
+fi
 
 cd ${WORK_DIR}/${APP}
 

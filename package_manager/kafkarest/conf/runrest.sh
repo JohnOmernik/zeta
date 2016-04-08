@@ -8,5 +8,5 @@ mkdir $NEW_CONF
 cp ${CONF_LOC}/* ${NEW_CONF}/
 
 
-echo "id=$HOSTNAME" >> ${NEW_CONF}/kafka-rest.properties
+echo "id=$HOSTNAME" >> ${NEW_CONF}/kafkarest.properties
 
