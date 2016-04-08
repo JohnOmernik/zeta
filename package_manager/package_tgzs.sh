@@ -17,17 +17,15 @@ for D in `find . -maxdepth 1 -type d`
 do
     if [ "$D" != "." ]; then
         if [ "$D" != "$PKG_DIR" ]; then
-            if [ "$D" != "./package_template" ]; then
-                PKG=$(echo $D|sed "s/\.\///g")
-                ZETA_PKG="zeta_inst_$PKG.tgz"
-                echo "Packaging $PKG into $ZETA_PKG"
-                tar zcf ${ZETA_PKG} $D
-                mv ${ZETA_PKG} ${PKG_DIR}/
-            fi
+            PKG=$(echo $D|sed "s/\.\///g")
+            ZETA_PKG="zeta_inst_$PKG.tgz"
+            echo "[INFO] Packaging $PKG into $ZETA_PKG"
+            tar zcf ${ZETA_PKG} $D
+            mv ${ZETA_PKG} ${PKG_DIR}/
         fi
     fi
 done
 
-echo "Packing all packages redundantly into packages tgz for use"
+echo "[INFO] Packing all packages redundantly into packages tgz for use"
 tar zcf zeta_packages.tgz $PKG_DIR
 mv zeta_packages.tgz ../

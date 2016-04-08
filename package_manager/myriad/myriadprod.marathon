@@ -1,0 +1,16 @@
+{
+"cmd": "env && mv yarn-site.xml hadoop-2.7.0/etc/hadoop/ && export YARN_RESOURCEMANAGER_OPTS=-Dyarn.resourcemanager.hostname=myriadprod.marathonprod.mesos.srsman.secureworks.net && hadoop-2.7.0/bin/yarn resourcemanager",
+"uris": ["file:///mapr/zetapoc/mesos/prod/myriad/hadoop-2.7.0.tgz", "file:///mapr/zetapoc/mesos/prod/myriad/conf/yarn-site.xml"],
+"labels": {
+  "PRODUCTION_READY":"True",
+  "ZETAENV":"prod",
+  "CONTAINERIZER":"Mesos"
+},
+"ports":[],
+"cpus": 1.0,
+"mem": 1024,
+"id": "myriadprod",
+"instances": 1,
+"user": "mapr"
+}
+
