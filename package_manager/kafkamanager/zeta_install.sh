@@ -14,6 +14,15 @@ APP_DIR="mesos"  # Most things fall into mesos. This is a suggestion, it will st
 # Load the install include file
 . /mapr/${CLUSTERNAME}/mesos/kstore/zeta_inc/zetaincludes/inc_zeta_install.sh
 
+
+if [ ! -d "/mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/dockerimages" ]; then
+    echo "dockerimages is required for ${APP}"
+    echo "exiting"
+    rm -rf ${APP_ROOT}
+    exit 1
+fi
+
+
 if [ ! -d "/mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/kafka" ]; then
     echo "kafka is required for ${APP}"
     echo "exiting"
@@ -28,6 +37,7 @@ cd "$(dirname "$0")"
 
 ###########
 # Copy files to their proper locations:. ${APP_ROOT} is set in the includes
+mkdir -p ${APP_ROOT}/${APP}_packages
 
 cp ./install_instance.sh ${APP_ROOT}/
 cp ./get_package.sh ${APP_ROOT}/

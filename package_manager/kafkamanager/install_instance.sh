@@ -1,7 +1,7 @@
 #!/bin/bash
 CLUSTERNAME=$(ls /mapr)
 
-APP="%YOURAPPNAME%"
+APP="kafkamanager"
 
 . /mapr/${CLUSTERNAME}/mesos/kstore/zeta_inc/zetaincludes/inc_general.sh
 
@@ -9,26 +9,43 @@ APP="%YOURAPPNAME%"
 ##########
 # Note: Template uses Docker Registery as example, you will want to change this
 # Get instance Specifc variables from user.
-read -e -p "Please enter the port Docker Registry should run on: " -i "5000" APP_PORT
-APP_MEM="1024" # This could be read in if you want the user to have control for your app
-APP_CPU="1" # This could be read in you want the user to have control for your app
+echo "Available Versions:"
+ls ${APP_ROOT}/${APP}_packages
+echo ""
+
+read -e -p "Please enter the $APP Version you wish to install this instance with: " -i "kafkamanager-1.3.0.7.tgz" APP_TGZ
+APP_VER=$(echo -n ${APP_TGZ}|sed "s/\.tgz//")
+if [ ! -f "${APP_ROOT}/${APP}_packages/${APP_TGZ}" ]; then
+    echo "The version of ${APP} you want: $APP_TGZ does not exist in ${APP_ROOT}/${APP}_packages" 
+    echo "Please set this up properly per get_package.sh"
+    rm -rf ${APP_HOME}
+    exit 1
+fi
+
+
+read -e -p "Please enter the port for ${APP_ID} instance of ${APP} should run on: " -i "49000" APP_PORT
+
+APP_MEM="512" # This could be read in if you want the user to have control for your app
+APP_CPU="0.5" # This could be read in you want the user to have control for your app
 
 ##########
 # Do instance specific things: Create Dirs, copy start files, make executable etc
-mkdir -p ${APP_HOME}/dockerdata # Change this to a volume create.
+
+echo "Moving Install packages. Please wait..."
+tar zxf ${APP_ROOT}/${APP}_packages/${APP_TGZ} -C ${APP_HOME}/
+
 cp ${APP_ROOT}/start_instance.sh ${APP_HOME}/
+
 chmod +x ${APP_HOME}/start_instance.sh
 
 
 ##########
 # Highly recommended to create instance specific information to an env file for your Mesos Role
-# Exampe ENV File for Docker Register V2 into sourced scripts
-
 cat > /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP}_${APP_ID}.sh << EOL1
 #!/bin/bash
-export ZETA_DOCKER_REG_ID="${APP_ID}"
-export ZETA_DOCKER_REG_PORT="${APP_PORT}"
-export ZETA_DOCKER_REG_URL="\${ZETA_DOCKER_REG_ID}.\${ZETA_MARATHON_ENV}.\${ZETA_MESOS_DOMAIN}:\${ZETA_DOCKER_REG_PORT}"
+export ZETA_KAFKAMANAGER_${APP_ID}_ENV="${APP_ID}"
+export ZETA_KAFKAMANAGER_${APP_ID}_HOST="${APP_ID}.\${ZETA_MARATHON_ENV}.\${ZETA_MESOS_DOMAIN}"
+export ZETA_KAFKAMANAGER_${APP_ID}_PORT="${APP_PORT}"
 EOL1
 
 ##########
@@ -36,10 +53,6 @@ EOL1
 . /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP}_${APP_ID}.sh 
 
 
-##########
-# Get specific instance related things, 
-H=$(hostname -f)
-echo "To ensure that the image exists for Docker Register V2, we use constraints to pin it to this host, this can be changed at a later time, however you must ensure the image zeta/dockerregv2 exists on the hosts in the constraints"
 
 ##########
 # Create a marathon file if appropriate in teh ${APP_HOME} directory
@@ -50,48 +63,28 @@ cat > ${APP_HOME}/${APP_ID}.marathon << EOF
   "cpus": ${APP_CPU},
   "mem": ${APP_MEM},
   "instances": 1,
-  "constraints": [["hostname", "LIKE", "$H"]],
- "labels": {
-   "PRODUCTION_READY":"True", "CONTAINERIZER":"Docker", "ZETAENV":"${MESOS_ROLE}"
+  "cmd":"cd /app && bin/kafka-manager",
+  "labels": {
+   "PRODUCTION_READY":"True", "CONTAINERIZER":"Docker", "ZETAENV":"Prod"
   },
-  "ports": [],
+ "env": {
+    "ZK_HOSTS": "${ZETA_ZK}"
+  },
   "container": {
     "type": "DOCKER",
     "docker": {
-      "image": "zeta/registry:2",
-      "network": "HOST"
+      "image": "${ZETA_DOCKER_REG_URL}/ubuntu1404openjdk8",
+      "network": "BRIDGE",
+      "portMappings": [
+        { "containerPort": 9000, "hostPort": 0, "servicePort": ${APP_PORT}, "protocol": "tcp"}
+      ]
     },
     "volumes": [
-      { "containerPath": "/var/lib/registry", "hostPath": "${APP_HOME}/dockerdata", "mode": "RW" }
+      { "containerPath": "/app", "hostPath": "${APP_HOME}/${APP_VER}", "mode": "RW" }
     ]
   }
 }
 EOF
-
-##########
-# Also do customer actions, create config files, setup proper links, etc for each instane here:
-#
-
-
-##########
-# Custom Actions like updating all nodes to use this as an insecure registry
-# Update Docker on all nodes to use insecure registry - Update for multiple registries
-cat > /mapr/$CLUSTERNAME/user/zetaadm/5_update_docker.sh << EOF2
-sudo mkdir -p /etc/systemd/system/docker.service.d
-sudo tee /etc/systemd/system/docker.service.d/docker.conf <<- 'EOF1'
-[Service]
-ExecStart=
-ExecStart=/usr/bin/docker daemon -H fd:// --insecure-registry=${ZETA_DOCKER_REG_URL}
-EOF1
-sudo systemctl daemon-reload
-sudo service docker restart
-EOF2
-
-chmod +x /mapr/$CLUSTERNAME/user/zetaadm/5_update_docker.sh
-
-echo "Updating Docker Daemon to handle insecure registry"
-/home/zetaadm/zetaadmin/run_cmd.sh "/mapr/$CLUSTERNAME/user/zetaadm/5_update_docker.sh"
-
 
 ##########
 # Provide instructions for next steps

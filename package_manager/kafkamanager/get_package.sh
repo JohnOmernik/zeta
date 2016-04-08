@@ -1,10 +1,10 @@
 #!/bin/bash
 
-APP="%YOURAPPNAME%"
+APP="kafkamanager"
+
 CLUSTERNAME=$(ls /mapr)
 
 . /mapr/${CLUSTERNAME}/mesos/kstore/zeta_inc/zetaincludes/inc_general.sh
-
 
 WORK_DIR="/tmp" # Used for creating tmp information
 rm -rf ${WORK_DIR}/${APP}
@@ -13,47 +13,38 @@ mkdir -p ${WORK_DIR}/${APP}
 cd ${WORK_DIR}/${APP}
 
 ##############
-# Provide example URLS Downloads
-#APP_URL_ROOT="https://archive.apache.org/dist/kafka/0.9.0.1/"
-#APP_URL_FILE="kafka_2.10-0.9.0.1.tgz"
-
-#wget ${APP_URL_ROOT}${APP_URL_FILE}
-#tar zxf ${APP_URL_FILE}
-
-##############
 #Provide example GIT Settings
 
-#APP_GIT_URL="https://github.com"
-#APP_GIT_USER="mesos"
-#APP_GIT_REPO="kafka"
-#APP_REPO="https://github.com/mesos/kafka"
-#git clone ${APP_GIT_URL}/${APP_GIT_USER}/${APP_GIT_REPO}
-#cd ${APP_GIT_REPO}
+APP_GIT_URL="https://github.com"
+APP_GIT_USER="yahoo"
+APP_GIT_REPO="kafka-manager"
+git clone ${APP_GIT_URL}/${APP_GIT_USER}/${APP_GIT_REPO}
 
-##############
-# Provide Example Docker Pull
-# We use the already built Docker Registry This could change in the future
-# APP_SRC_DOCKER_REPO="registery"
-# APP_SRC_DOCKER_IMAGE="2"
-#sudo docker pull ${APP_SRC_DOCKER_REPO}:${APP_SRC_DOCKER_IMAGE}
+cat > ${WORK_DIR}/${APP}/${APP_GIT_REPO}/build.sh << EOL1
+#!/bin/bash
+apt-get install -y wget
+cd /app
+./sbt clean dist
+EOL1
+chmod +x ${APP_GIT_REPO}/build.sh
+
+APP_VER=$(grep -E "^version" ./${APP_GIT_REPO}/build.sbt|cut -d"\"" -f2)
+
+APP_BUILD_IMG="${ZETA_DOCKER_REG_URL}/ubuntu1404openjdk8"
+
+sudo docker run -t --rm -v=${WORK_DIR}/${APP}/${APP_GIT_REPO}:/app ${APP_BUILD_IMG} /app/build.sh
+
+sudo chown -R zetaadm:zetaadm ./${APP_GIT_REPO}
+
+mv ./${APP_GIT_REPO}/target/universal/kafka-manager-${APP_VER}.zip ./
+unzip kafka-manager-${APP_VER}.zip
+mv kafka-manager-${APP_VER}/ ${APP}-${APP_VER}
+
+APP_TGZ="${APP}-${APP_VER}.tgz"
+
+tar zcf ${APP_TGZ} ./${APP}-${APP_VER}
 
 
-
-
-##############
-# Finanlize location of pacakge
-
-# Tag and upload docker image if needed locally if needed (zeta is for local, but consider using the env variables for the roles)
-
-#sudo docker tag ${APP_SRC_DOCKER_REPO}:${APP_SRC_DOCKER_IMAGE} zeta/${APP_SRC_DOCKER_REPO}:${APP_SRC_DOCKER_IMAGE}
-#sudo docker push zeta/${APP_SRC_DOCKER_REPO}:${APP_SRC_DOCKER_IMAGE}
-
-# or
-
-# tar up the package with the version and copy to ${APP_ROOT}/${APP}_packages
-# APP_TGZ="${APP}-mesos-${APP_MESOS_VER}.tgz"
-
-#tar zcf ${APP_TGZ} ./*
 if [ -f "${APP_ROOT}/${APP}_packages/${APP_TGZ}" ]; then
     echo "This package already exists. We can exit now, without overwriting, or you can overwrite with the package you just built"
     read -e -p "Should we overwrite ${APP_TGZ} located in ${APP_ROOT}/${APP}_packages with the currently built package? (Y/N): " -i "N" OW
@@ -79,5 +70,5 @@ echo ""
 
 ##############
 # Clean up Work Dir
-cd ${WORK_DIR}
-rm -rf ${WORK_DIR}/${APP}
+#cd ${WORK_DIR}
+#rm -rf ${WORK_DIR}/${APP}
