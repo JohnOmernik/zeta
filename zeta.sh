@@ -144,6 +144,7 @@ do
     if [ "$MAPR_PASS1" != "$MAPR_PASS2" ]; then warn "Does not match, try again."; fi
 done
 info "Encrypted [$MAPR_USER] password and included it in config.final"
+MAPR_PASS_ENCRYPT=`echo ${MAPR_PASS1} | openssl rsautl -encrypt -pubin -inkey ${DIR}/encrypt.pub | base64`
 
 while [ "$ZETAADM_PASS1" != "$ZETAADM_PASS2" ]
 do
@@ -153,7 +154,9 @@ do
     echo -e ""
     if [ "$ZETAADM_PASS" != "$ZETAADM_PASS2" ]; then warn "Does not match, try again."; fi
 done
+
 info "Encrypted [$ZETAADM_USER] password and included it in config.final"
+ZETAADM_PASS_ENCRYPT=`echo ${ZETAADM_PASS1} | openssl rsautl -encrypt -pubin -inkey ${DIR}/encrypt.pub | base64`
 
 info "Packing everything up and uploading to /home/${IUSER}/."
 if [[ -f /tmp/uploader.tar.gz ]]; then rm -f /tmp/uploader.tar.gz; fi
@@ -164,3 +167,6 @@ if [[ $? -ne 0 ]]; then
     err "Error uploading data to the server"
     exit 1
 fi
+
+
+$
