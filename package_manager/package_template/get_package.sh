@@ -26,7 +26,6 @@ cd ${WORK_DIR}/${APP}
 #APP_GIT_URL="https://github.com"
 #APP_GIT_USER="mesos"
 #APP_GIT_REPO="kafka"
-#APP_REPO="https://github.com/mesos/kafka"
 #git clone ${APP_GIT_URL}/${APP_GIT_USER}/${APP_GIT_REPO}
 #cd ${APP_GIT_REPO}
 
