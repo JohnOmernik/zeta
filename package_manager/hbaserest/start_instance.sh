@@ -2,7 +2,7 @@
 
 CLUSTERNAME=$(ls /mapr)
 
-APP="%APPNAME%"
+APP="hbaserest"
 
 . /mapr/${CLUSTERNAME}/mesos/kstore/zeta_inc/zetaincludes/inc_general.sh
 

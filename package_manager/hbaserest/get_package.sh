@@ -1,6 +1,6 @@
 #!/bin/bash
 
-APP="%YOURAPPNAME%"
+APP="hbaserest"
 CLUSTERNAME=$(ls /mapr)
 
 . /mapr/${CLUSTERNAME}/mesos/kstore/zeta_inc/zetaincludes/inc_general.sh
@@ -14,54 +14,48 @@ cd ${WORK_DIR}/${APP}
 
 ##############
 # Provide example URLS Downloads
-#APP_URL_ROOT="https://archive.apache.org/dist/kafka/0.9.0.1/"
-#APP_URL_FILE="kafka_2.10-0.9.0.1.tgz"
-
-#wget ${APP_URL_ROOT}${APP_URL_FILE}
-#tar zxf ${APP_URL_FILE}
-
-##############
-#Provide example GIT Settings
-
-#APP_GIT_URL="https://github.com"
-#APP_GIT_USER="mesos"
-#APP_GIT_REPO="kafka"
-#git clone ${APP_GIT_URL}/${APP_GIT_USER}/${APP_GIT_REPO}
-#cd ${APP_GIT_REPO}
-
-##############
-# Provide Example Docker Pull
-# We use the already built Docker Registry This could change in the future
-# APP_SRC_DOCKER_REPO="registery"
-# APP_SRC_DOCKER_IMAGE="2"
-#sudo docker pull ${APP_SRC_DOCKER_REPO}:${APP_SRC_DOCKER_IMAGE}
+APP_URL_ROOT="http://package.mapr.com/releases/ecosystem-5.x/redhat/"
+APP_URL_FILE="mapr-hbase-1.1.1.201602221251-1.noarch.rpm"
 
 
+wget ${APP_URL_ROOT}${APP_URL_FILE}
+echo "if rpm2cpio and cpio are not installed, this will fail. If so, just install them and run again"
+rpm2cpio ${APP_URL_FILE} | cpio -idmv
 
+APP_VER=$(ls ./opt/mapr/hbase/)
+APP_TGZ="${APP_VER}.tgz"
 
-##############
-# Finanlize location of pacakge
+cd ./opt/mapr/hbase
+cd ${APP_VER}
+tar zcf ${APP_ROOT}/${APP}_packages/${APP}_conf.tgz ./conf
+mv ./conf ./conf_old
+cd ..
+tar zcf ${APP_TGZ} ${APP_VER}
+mv ./${APP_TGZ} ${WORK_DIR}/${APP}/
+cd ${WORK_DIR}/${APP}
+rm -rf ./opt
 
-# Tag and upload docker image if needed locally if needed (zeta is for local, but consider using the env variables for the roles)
+mkdir dockerbuild
+mv ./${APP_TGZ} ./dockerbuild/
 
-#sudo docker tag ${APP_SRC_DOCKER_REPO}:${APP_SRC_DOCKER_IMAGE} zeta/${APP_SRC_DOCKER_REPO}:${APP_SRC_DOCKER_IMAGE}
-#sudo docker push zeta/${APP_SRC_DOCKER_REPO}:${APP_SRC_DOCKER_IMAGE}
+cat > ${WORK_DIR}/${APP}/dockerbuild/Dockerfile << EOL1
 
-# or
+FROM ${ZETA_DOCKER_REG_URL}/minjdk8
 
-# tar up the package with the version and copy to ${APP_ROOT}/${APP}_packages
-# APP_TGZ="${APP}-mesos-${APP_MESOS_VER}.tgz"
+RUN apk --update add libstdc++ && rm /var/cache/apk/*
 
-#tar zcf ${APP_TGZ} ./*
-if [ -f "${APP_ROOT}/${APP}_packages/${APP_TGZ}" ]; then
-    echo "This package already exists. We can exit now, without overwriting, or you can overwrite with the package you just built"
-    read -e -p "Should we overwrite ${APP_TGZ} located in ${APP_ROOT}/${APP}_packages with the currently built package? (Y/N): " -i "N" OW
-    if [ "$OW" != "Y" ]; then
-        echo "Your answer was not Y therefore we are exiting"
-        exit 1
-    fi
-fi
-mv ${APP_TGZ} ${APP_ROOT}/${APP}_packages/
+ADD ${APP_TGZ} /
+
+cmd ["java -version"]
+EOL1
+
+cd dockerbuild
+
+APP_IMG="${ZETA_DOCKER_REG_URL}/hbasebase"
+
+sudo docker build -t $APP_IMG .
+sudo docker push $APP_IMG
+
 
 ##############
 # Provide next step instuctions
