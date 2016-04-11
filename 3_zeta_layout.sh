@@ -260,7 +260,7 @@ echo "Removing install package and setting scripts to executable"
 rm zeta_inst_zetaadmin.tgz
 chmod +x ./zetaadmin/*
 chmod +x /mapr/$CLUSTERNAME/user/zetaadm/zetaadmin/*
-
+cp /mapr/$CLUSTERNAME/user/zetaadm/zetaadmin/dockersync.sh /mapr/$CLUSTERNAME/mesos/kstore/zeta_sync/
 
 
 echo "Main Layout for Zeta installed"
