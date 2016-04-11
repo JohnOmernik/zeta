@@ -38,7 +38,7 @@ GRPLIST="$ZETA_SYNC/$GROUP_LIST"
 
 echo "Getting GID for group"
 T=$(cat $GRPLIST|grep -E "35[0-9][0-9]")
-if [ "\$T" != "" ];then
+if [ "$T" != "" ];then
     echo "Found existing zeta groups, finding the next highest GID"
     TP=$(cat $GRPLIST |grep -E "35[0-9][0-9]"|cut -d":" -f2|sort -r|head -1)
     ZETA_GID=$(($TP + 1))

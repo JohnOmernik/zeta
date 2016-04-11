@@ -177,7 +177,8 @@ zetausers:2501:mapr,zetaadm
 GRPEOF
 
 cat > ${DIR}/zetausers.list << USROF
-zetaadm:2500
+mapr:$(id -u mapr)
+zetaadm:$(id -u zetaadm)
 USROF
 
 
