@@ -1,95 +1,117 @@
 #!/bin/bash
 
-MESOS_ROLE="prod"
 CLUSTERNAME=$(ls /mapr)
-. /mapr/$CLUSTERNAME/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
-cd "$(dirname "$0")"
 
-# This is a basic script to add users to a basic Zeta Setup.  This should have better automation in the future. 
+ZETA_SYNC="/mapr/$CLUSTERNAME/mesos/kstore/zetasync"
 
-TEST=0
+ZETA_ADM="/mapr/${CLUSTERNAME}/user/zetaadm/zetaadmin"
 
-USERMOD="/usr/sbin/usermod"
+USER_LIST="zetausers.list"
 
-USERNAME=""  # This should be a valid user in the login domain
+GROUP_LIST="zetagroups.list"
 
-MESOSPROD=0
-MESOSDEV=1
-ETLPROD=0
-ETLDEV=1
-APPSPROD=0
-APPSDEV=1
-DATAPROD=0
-DATADEV=1
-GUIUSER=0
-CLUSTERADMIN=0
+USER_NAME=$1
 
-echo "Step 1: Adding $USERNAME to zetausers on all nodes"
-if [ "$TEST" == 0 ]; then
-  ./run_cmd.sh "hostname;sudo $USERMOD -a -G zetausers $USERNAME" 2> /dev/null
+
+if [ "$USER_NAME" == "" ]; then
+    echo "User cannot be blank"
+    echo "./addzetauser.sh %USERNAME%"
+    exit 1
 fi
 
 
-echo "Now Creating the Users Home Volume"
-if [ "$TEST" == 0 ]; then
-   maprcli volume create -name ${USERNAME} -path /user/${USERNAME} -rootdirperms 775 -user ${USERNAME}:fc,a,dump,restore,m,d zetaadm:fc,a,d,m,restore,dump
-   sudo chown $USERNAME /mapr/$CLUSTERNAME/user/$USERNAME
-   sudo chmod 755 /mapr/$CLUSTERNAME/user/$USERNAME
+UTEST=$(grep $USER_NAME $ZETA_SYNC/$USER_LIST)
+
+
+if [ "$UTEST" != "" ]; then
+    echo "User $USER_NAME already exists in $ZETA_SYNC/$USER_LIST... exiting"
+    exit 1
 fi
 
 
-if [ "$MESOSPROD" == 1 ]; then
-   echo "Adding to Mesos Prod"
-   if [ "$TEST" == 0 ]; then
-      ./run_cmd.sh "hostname;sudo $USERMOD -a -G zetaprodmesos $USERNAME" 2> /dev/null
-   fi
+if [ -d "/mapr/$CLUSTERNAME/user/$USER_NAME" ]; then
+    echo "User home directory for $USER_NAME already exists at /mapr/$CLUSTERNAME/user"
+    echo "User Creation will not continue"
+    exit 1
 fi
 
-if [ "$MESOSDEV" == 1 ]; then
-   echo "Adding to Mesos Dev"
-   if [ "$TEST" == 0 ]; then
-      ./run_cmd.sh "hostname;sudo $USERMOD -a -G zetadevmesos $USERNAME" 2> /dev/null
-   fi
-fi
-if [ "$ETLPROD" == 1 ]; then
-   echo "Adding to ETL Prod"
-   if [ "$TEST" == 0 ]; then
-      ./run_cmd.sh "hostname;sudo $USERMOD -a -G zetaprodetl $USERNAME" 2> /dev/null
-   fi
+
+
+# 2500 = zetaadm:zetaadm
+# 2501 + zetausers group
+# 2600 = zeta users and their groups (for individuals) and service accounts
+# 3500 zeta role based groups
+
+USRLIST="$ZETA_SYNC/$USER_LIST"
+
+echo "Getting Next User UID"
+Y=$(cat $USRLIST|grep -E "26[0-9][0-9]")
+if [ "$Y" != "" ];then
+    echo "Zeta Users already exist"
+    TU=$(cat $USRLIST |grep -E "26[0-9][0-9]"|cut -d":" -f2|sort -r|head -1)
+    ZETA_UID=$(($TU + 1))
+else
+    ZETA_UID="2600"
 fi
 
-if [ "$ETLDEV" == 1 ]; then
-   echo "Adding to ETL Dev"
-   if [ "$TEST" == 0 ]; then
-      ./run_cmd.sh "hostname;sudo $USERMOD -a -G zetadevetl $USERNAME" 2> /dev/null
-   fi
-fi
 
-if [ "$APPSPROD" == 1 ]; then
-   echo "Adding to Apps Prod"
-   if [ "$TEST" == 0 ]; then
-      ./run_cmd.sh "hostname;sudo $USERMOD -a -G zetaprodapps $USERNAME" 2> /dev/null
-   fi
-fi
 
-if [ "$APPSDEV" == 1 ]; then
-   echo "Adding to Apps Dev"
-   if [ "$TEST" == 0 ]; then
-      ./run_cmd.sh "hostname;sudo $USERMOD -a -G zetadevapps $USERNAME" 2> /dev/null
-   fi
-fi
+echo "Adding User $USER_NAME with UID $ZETA_UID to all nodes"
+echo ""
 
-if [ "$DATAPROD" == 1 ]; then
-   echo "Adding to Data Prod"
-   if [ "$TEST" == 0 ]; then
-      ./run_cmd.sh "hostname;sudo $USERMOD -a -G zetaproddata $USERNAME" 2> /dev/null
-   fi
-fi
+stty -echo
+echo "Please enter the password for $USER_NAME: "
+read USER_PASS
+echo ""
+printf "Please renter password for $USER_NAME: "
+read USER_PASS2
+echo ""
+stty echo
 
-if [ "$DATADEV" == 1 ]; then
-   echo "Adding to Data Dev"
-   if [ "$TEST" == 0 ]; then
-      ./run_cmd.sh "hostname;sudo $USERMOD -a -G zetadevdata $USERNAME" 2> /dev/null
-   fi
-fi
+while [ "$USER_PASS" != "$USER_PASS2" ]
+do
+    echo "Passwords do not match - Please try again"
+    stty -echo
+    echo "Please enter the password for $USER_NAME: "
+    read USER_PASS
+    echo ""
+    printf "Please renter password for $USER_NAME: "
+    read USER_PASS2
+    echo ""
+    stty echo
+done
 
+
+
+
+
+USCRIPT="/mapr/${CLUSTERNAME}/user/zetaadm/create_${USER_NAME}.sh"
+cat > $USCRIPT << EOF99
+#!/bin/bash
+adduser --uid $ZETA_UID $USER_NAME
+echo "$USER_PASS"|passwd --stdin $USER_NAME
+EOF99
+
+echo "Creating User"
+chmod +x $USCRIPT
+${ZETA_ADM}/run_cmd.sh "sudo $USCRIPT"
+rm $USCRIPT
+echo "${USER_NAME}:${ZETA_UID}" >> $USRLIST
+
+echo "Adding user to zetausers"
+${ZETA_ADM}/addtozetagroup.sh $USER_NAME zetausers
+
+echo "Creating MapR-FS Home Directory"
+sudo maprcli volume create -name ${USER_NAME} -path /user/${USER_NAME} -rootdirperms 775 -user ${USER_NAME}:fc,a,dump,restore,m,d zetaadm:fc,a,d,m,restore,dump
+while [ ! -d "/mapr/${CLUSTERNAME}/user/${USER_NAME}" ]
+do
+    echo "Listing of user directory, waiting for volume creation:"
+    ls -ls /mapr/${CLUSTERNAME}/user/
+    sleep 1
+
+done
+echo "Home Directory Exists, updating perms"
+sudo chown $USER_NAME /mapr/$CLUSTERNAME/user/$USER_NAME
+sudo chmod 755 /mapr/$CLUSTERNAME/user/$USER_NAME
+
+echo "User $USER_NAME Created!"
