@@ -25,7 +25,7 @@ cd "$(dirname "$0")"
 
 ###########
 # Copy files to their proper locations:. ${APP_ROOT} is set in the includes
-
+mkdir -p ${APP_ROOT}/${APP}_packages
 cp ./install_instance.sh ${APP_ROOT}/
 cp ./get_package.sh ${APP_ROOT}/
 cp ./start_instance.sh ${APP_ROOT}/
