@@ -39,6 +39,7 @@ if [ -d "${APP_USER_ID_DIR}" ]; then
     exit 0
 fi
 
+
 cp ${APP_ROOT}/start_instance.sh ${APP_HOME}/
 chmod +x ${APP_HOME}/start_instance.sh
 
@@ -130,7 +131,7 @@ cat > ${APP_HOME}/${APP_ID}.marathon << EOF
   "cpus": ${APP_CPU},
   "mem": ${APP_TOTAL_MEM},
   "instances": 1,
-  "cmd":"(sleep 45; chown ${APP_UID}:0 /conf/interpreter.json; chmod 660 /conf/interpreter.json) & /zeppelin/bin/zeppelin.sh",
+  "cmd":"/zeta_sync/dockersync.sh ${APP_USER} && su -c /zeppelin/bin/zeppelin.sh ${APP_USER}",
   "labels": {
    "PRODUCTION_READY":"True", "CONTAINERIZER":"Docker", "ZETAENV":"${MESOS_ROLE}"
   },
@@ -161,9 +162,19 @@ cat > ${APP_HOME}/${APP_ID}.marathon << EOF
         "mode": "RO"
       },
       {
+        "containerPath": "/mapr/${CLUSTERNAME}",
+        "hostPath": "/mapr/${CLUSTERNAME}",
+        "mode": "RW"
+      },
+      {
         "containerPath": "/logs",
         "hostPath": "${APP_USER_ID_DIR}/logs",
         "mode": "RW"
+      },
+      {
+        "containerPath": "/zeta_sync",
+        "hostPath": "/mapr/$CLUSTERNAME/mesos/kstore/zetasync",
+        "mode": "RO"
       },
       {
         "containerPath": "/notebooks",
