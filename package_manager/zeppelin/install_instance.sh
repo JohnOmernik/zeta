@@ -67,7 +67,7 @@ MESOS_ROLE="${MESOS_ROLE}"
 APP_UP="${APP_UP}"
 APP_ID="${APP_ID}"
 
-. /mapr/\$CLUSTERNAME/mesos/kstore/env/zeta_zetaaws_\${MESOS_ROLE}.sh
+. /mapr/\$CLUSTERNAME/mesos/kstore/env/zeta_\${CLUSTERNAME}_\${MESOS_ROLE}.sh
 
 
 RUSER=\$(whoami)
