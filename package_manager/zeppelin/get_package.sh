@@ -30,6 +30,10 @@ if [ -d "${APP_ROOT}/${APP}_packages/zep_build" ]; then
     read -e -p "Looks like the dockerfile was already here. Do you want to rebuild? " -i "N" BUILD
 fi
 
+APP_BUILD_IMG="${ZETA_DOCKER_REG_URL}/zep_build"
+APP_RUN_IMG="${ZETA_DOCKER_REG_URL}/zep_run"
+
+
 if [ "$BUILD" == "Y" ]; then
     mkdir -p ${APP_ROOT}/${APP}_packages/zep_build
     mkdir -p ${APP_ROOT}/${APP}_packages/zep_run
@@ -56,8 +60,6 @@ EOF1
 
     echo "Building, tagging, and pushing Zeppeling run and build images"
     cd ${APP_ROOT}/${APP}_packages/zep_build/
-    APP_BUILD_IMG="${ZETA_DOCKER_REG_URL}/zep_build"
-    APP_RUN_IMG="${ZETA_DOCKER_REG_URL}/zep_run"
     sudo docker build -t ${APP_BUILD_IMG} .
 
     cd ${APP_ROOT}/${APP}_packages/zep_run
@@ -88,8 +90,22 @@ chmod +x ./${APP_GIT_REPO}/build.sh
 
 echo "Use the build image to build Zeppelin"
 
-sudo docker run -t --rm -v=${WORK_DIR}/${APP}/${APP_GIT_REPO}:/app ${APP_BUILD_IMG} ./build.sh
+sudo docker run -t --rm -v=${WORK_DIR}/${APP}/${APP_GIT_REPO}:/app ${APP_BUILD_IMG} /app/build.sh
 
+
+if [ -f "/mapr/$CLUSTERNAME/${APP_DIR}/${MESOS_ROLE}/pyedwin/pyedwin_packages/pyedwin.tgz" ]; then
+    echo "A Pyedwin Package has been identified, should we include it in our base install?"
+    read -e -p "Include Pyedwin in interpreters?  " -i "Y" APP_PYEDWIN
+    if [ "$APP_PYEDWIN" == "Y" ]; then
+        echo "Including pyedwin"
+        cd ${APP_GIT_REPO}
+        cp /mapr/$CLUSTERNAME/${APP_DIR}/${MESOS_ROLE}/pyedwin/pyedwin_packages/pyedwin.tgz ./interpreters
+        cd interpreters
+        tar zxf pyedwin.tgz
+        cd ..
+        cd ..
+    fi
+fi
 
 echo "Getting Current version from pom.xml"
 cd ${APP_GIT_REPO}
@@ -102,15 +118,20 @@ sudo cp ./${DRILL_VER}/jars/jdbc-driver/drill-jdbc-all* ./${APP_GIT_REPO}/interp
 rm -rf ./${DRILL_VER}
 
 
+
 echo "Packaging Zeppelin"
 sudo mv ${APP_GIT_REPO} "${APP}-${APP_VER}"
 APP_TGZ="${APP}-${APP_VER}.tgz"
 sudo chown -R zetaadm:zetaadm "${APP}-${APP_VER}"
+<<<<<<< HEAD
+cp ${APP}-${APP_VER}/zeppelin-interpreter/target/zeppelin-interpreter-*.jar ${APP_ROOT}/${APP}_packages/
+=======
 
 echo "Adding Jar to ${APP_ROOT}/${APP}_packages/"
 echo "This is hard coded and will change and break"
 cp ${APP}-${APP_VER}/zeppelin-interpreter/zeppelin-interpreter-*.jar ${APP_ROOT}/${APP}_packages/
 
+>>>>>>> master
 tar zcf ${APP_TGZ} ${APP}-${APP_VER}/
 
 ##############
