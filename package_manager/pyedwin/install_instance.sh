@@ -1,97 +1,43 @@
 #!/bin/bash
 CLUSTERNAME=$(ls /mapr)
 
-APP="%YOURAPPNAME%"
+APP="pyedwin"
 
+APP_ID="na"
 . /mapr/${CLUSTERNAME}/mesos/kstore/zeta_inc/zetaincludes/inc_general.sh
 
 
 ##########
 # Note: Template uses Docker Registery as example, you will want to change this
 # Get instance Specifc variables from user.
-read -e -p "Please enter the port Docker Registry should run on: " -i "5000" APP_PORT
-APP_MEM="1024" # This could be read in if you want the user to have control for your app
-APP_CPU="1" # This could be read in you want the user to have control for your app
+echo ""
+echo ""
+echo "This install does not install an instance of pyedwin, but installs pyedwin into an already installed instance of Zeppelin"
+echo "It also incorporates edwin_org.json specific to Zeta for helping users navigate Zeta"
+echo ""
+echo ""
 
-##########
-# Do instance specific things: Create Dirs, copy start files, make executable etc
-mkdir -p ${APP_HOME}/dockerdata # Change this to a volume create.
-cp ${APP_ROOT}/start_instance.sh ${APP_HOME}/
-chmod +x ${APP_HOME}/start_instance.sh
+echo "Here is a list of potential instances in the zeppelin install path:"
+echo ""
+ls -1 /mapr/$CLUSTERNAME/mesos/${MESOS_ROLE}/zeppelin
+echo ""
+read -e -p "Please enter the name of the Zeppelin instance we should install pyedwin to: " -i "zeppelinprod" APP_ZEP_INSTANCE
 
+#env
+### Consider getting some variables to help the user
+TUSER="ZETA_ZEPPELIN_${APP_ZEP_INSTANCE}_USER"
+echo $TUSER
+eval RUSER=\$$TUSER
 
-##########
-# Highly recommended to create instance specific information to an env file for your Mesos Role
-# Exampe ENV File for Docker Register V2 into sourced scripts
+echo "$RUSER"
 
-cat > /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP}_${APP_ID}.sh << EOL1
-#!/bin/bash
-export ZETA_DOCKER_REG_ID="${APP_ID}"
-export ZETA_DOCKER_REG_PORT="${APP_PORT}"
-export ZETA_DOCKER_REG_URL="\${ZETA_DOCKER_REG_ID}.\${ZETA_MARATHON_ENV}.\${ZETA_MESOS_DOMAIN}:\${ZETA_DOCKER_REG_PORT}"
-EOL1
+ZEP_INSTANCE=/mapr/$CLUSTERNAME/user/$RUSER/zeppelin/${APP_ZEP_INSTANCE}/zeppelin-*
 
-##########
-# After it's written we source itSource the script!
-. /mapr/$CLUSTERNAME/mesos/kstore/env/env_${MESOS_ROLE}/${APP}_${APP_ID}.sh 
-
-
-##########
-# Get specific instance related things, 
-H=$(hostname -f)
-echo "To ensure that the image exists for Docker Register V2, we use constraints to pin it to this host, this can be changed at a later time, however you must ensure the image zeta/dockerregv2 exists on the hosts in the constraints"
-
-##########
-# Create a marathon file if appropriate in teh ${APP_HOME} directory
-
-cat > ${APP_HOME}/${APP_ID}.marathon << EOF
-{
-  "id": "${APP_ID}",
-  "cpus": ${APP_CPU},
-  "mem": ${APP_MEM},
-  "instances": 1,
-  "constraints": [["hostname", "LIKE", "$H"]],
- "labels": {
-   "PRODUCTION_READY":"True", "CONTAINERIZER":"Docker", "ZETAENV":"${MESOS_ROLE}"
-  },
-  "ports": [],
-  "container": {
-    "type": "DOCKER",
-    "docker": {
-      "image": "zeta/registry:2",
-      "network": "HOST"
-    },
-    "volumes": [
-      { "containerPath": "/var/lib/registry", "hostPath": "${APP_HOME}/dockerdata", "mode": "RW" }
-    ]
-  }
-}
-EOF
-
-##########
-# Also do customer actions, create config files, setup proper links, etc for each instane here:
-#
-
-
-##########
-# Custom Actions like updating all nodes to use this as an insecure registry
-# Update Docker on all nodes to use insecure registry - Update for multiple registries
-cat > /mapr/$CLUSTERNAME/user/zetaadm/5_update_docker.sh << EOF2
-sudo mkdir -p /etc/systemd/system/docker.service.d
-sudo tee /etc/systemd/system/docker.service.d/docker.conf <<- 'EOF1'
-[Service]
-ExecStart=
-ExecStart=/usr/bin/docker daemon -H fd:// --insecure-registry=${ZETA_DOCKER_REG_URL}
-EOF1
-sudo systemctl daemon-reload
-sudo service docker restart
-EOF2
-
-chmod +x /mapr/$CLUSTERNAME/user/zetaadm/5_update_docker.sh
-
-echo "Updating Docker Daemon to handle insecure registry"
-/home/zetaadm/zetaadmin/run_cmd.sh "/mapr/$CLUSTERNAME/user/zetaadm/5_update_docker.sh"
-
+cp ${APP_ROOT}/${APP}_packages/pyedwin.tgz ${ZEP_INSTANCE}/interpreter/
+cd ${ZEP_INSTANCE}/interpreter
+tar zxf ./pyedwin.tgz
+rm pyedwin.tgz
+rm -rf ${APP_HOME}
 
 ##########
 # Provide instructions for next steps

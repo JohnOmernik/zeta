@@ -19,6 +19,13 @@ APP_DIR="mesos"  # Most things fall into mesos. This is a suggestion, it will st
 # Load the install include file
 . /mapr/${CLUSTERNAME}/mesos/kstore/zeta_inc/zetaincludes/inc_zeta_install.sh
 
+
+if [ ! -d "/mapr/$CLUSTERNAME/mesos/$MESOS_ROLE/zeppelin" ]; then
+    echo "You must install Zeppelin prior to installing $APP"
+    rm -rf $APP_ROOT
+    exit 1
+fi 
+
 ###########
 # CD to the temp location where this script is run from 
 cd "$(dirname "$0")"

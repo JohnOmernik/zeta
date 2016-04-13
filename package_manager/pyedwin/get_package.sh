@@ -1,6 +1,6 @@
 #!/bin/bash
 
-APP="%YOURAPPNAME%"
+APP="pyedwin"
 CLUSTERNAME=$(ls /mapr)
 
 . /mapr/${CLUSTERNAME}/mesos/kstore/zeta_inc/zetaincludes/inc_general.sh
@@ -24,7 +24,11 @@ APP_GIT_URL="https://github.com"
 APP_GIT_USER="johnomernik"
 APP_GIT_REPO="pyedwin"
 git clone ${APP_GIT_URL}/${APP_GIT_USER}/${APP_GIT_REPO}
+
 cd ${APP_GIT_REPO}
+
+sed -i "s/ZEPPELIN_JAR_PATH=~/pyedwin/zeppelin/zeppelin-interpreter/ZEPPELIN_JAR_PATH zeppelin/zeppelin-interpreter/" ./build_interpreter.sh
+
 mkdir zeppelin/zeppelin-interpreter
 cp /mapr/$CLUSTERNAME/mesos/$MESOS_ROLE/zeppelin/zeppelin_packages/zeppelin-interpreter-0.6.0-incubating-SNAPSHOT.jar zeppelin/zeppelin-interpreter/
 ./build_interpreter.sh 1
