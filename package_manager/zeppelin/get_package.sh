@@ -106,6 +106,11 @@ echo "Packaging Zeppelin"
 sudo mv ${APP_GIT_REPO} "${APP}-${APP_VER}"
 APP_TGZ="${APP}-${APP_VER}.tgz"
 sudo chown -R zetaadm:zetaadm "${APP}-${APP_VER}"
+
+echo "Adding Jar to ${APP_ROOT}/${APP}_packages/"
+echo "This is hard coded and will change and break"
+cp ${APP}-${APP_VER}/zeppelin-interpreter/zeppelin-interpreter-*.jar ${APP_ROOT}/${APP}_packages/
+
 tar zcf ${APP_TGZ} ${APP}-${APP_VER}/
 
 ##############
