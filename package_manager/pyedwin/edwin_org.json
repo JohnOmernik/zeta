@@ -1,0 +1,46 @@
+{
+    "datasets":{
+        "t":"These are Available Data Sets",
+        "a":"None",
+        "dataset1":{
+            "t":"Data",
+            "a":"None",
+            "schema":{
+                "t":"Schema<BR>Some<BR>stuff",
+                "a":"None"
+            }
+        },
+        "dataset2":{
+            "t":"Data from another source",
+            "a":"None",
+            "schema":{
+                "t":"Schema info",
+                "a":"None"
+            }
+        }
+    },
+    "datatools":{
+        "t":"Data Tools within the organization",
+        "a":"None",
+        "spark":{
+            "t":"Apache Spark for batch and realtime programatic data manipulation",
+            "a":"None"
+            },
+        "kafka":{   
+            "t":"Apache Kafka for messaging",
+            "a":"None"
+            },
+        "drill":{   
+            "t":"Apache Drill for adhoc query",
+            "a":"None"
+            },
+        "hbase":{   
+            "t":"hbase and Maprdb for realtime databases",
+            "a":"None"
+            },
+        "docker":{   
+            "t":"docker and containerized code",
+            "a":"None"
+            }
+    }
+}
