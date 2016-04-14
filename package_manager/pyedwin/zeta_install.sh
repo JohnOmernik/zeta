@@ -36,7 +36,7 @@ cd "$(dirname "$0")"
 cp ./install_instance.sh ${APP_ROOT}/
 cp ./get_package.sh ${APP_ROOT}/
 cp ./start_instance.sh ${APP_ROOT}/
-
+cp ./edwin_org.json ${APP_ROOT}/${APP}_packages/
 ###########
 # Only make executable the next steps. 
 chmod +x ${APP_ROOT}/install_instance.sh

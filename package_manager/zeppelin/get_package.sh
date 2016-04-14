@@ -26,8 +26,12 @@ mkdir -p ${APP_ROOT}/${APP}_packages
 
 BUILD="Y"
 
-if [ -d "${APP_ROOT}/${APP}_packages/zep_build" ]; then
-    read -e -p "Looks like the dockerfile was already here. Do you want to rebuild? " -i "N" BUILD
+PCHECK=$(sudo docker images|grep zep_build)
+OCHECK=$(sudo docker images|grep zep_run)
+if [ "$PCHECK" == "" ] || [ "$OCHECK" == "" ]; then
+    echo "Building images because one of the two does not exist"
+else
+    read -e -p "Looks like the build and run images for Zeppelin already exist. Do you want to rebuild? " -i "N" BUILD
 fi
 
 APP_BUILD_IMG="${ZETA_DOCKER_REG_URL}/zep_build"
@@ -123,15 +127,9 @@ echo "Packaging Zeppelin"
 sudo mv ${APP_GIT_REPO} "${APP}-${APP_VER}"
 APP_TGZ="${APP}-${APP_VER}.tgz"
 sudo chown -R zetaadm:zetaadm "${APP}-${APP_VER}"
-<<<<<<< HEAD
-cp ${APP}-${APP_VER}/zeppelin-interpreter/target/zeppelin-interpreter-*.jar ${APP_ROOT}/${APP}_packages/
-=======
-
 echo "Adding Jar to ${APP_ROOT}/${APP}_packages/"
-echo "This is hard coded and will change and break"
-cp ${APP}-${APP_VER}/zeppelin-interpreter/zeppelin-interpreter-*.jar ${APP_ROOT}/${APP}_packages/
+cp ${APP}-${APP_VER}/zeppelin-interpreter/target/zeppelin-interpreter-*.jar ${APP_ROOT}/${APP}_packages/
 
->>>>>>> master
 tar zcf ${APP_TGZ} ${APP}-${APP_VER}/
 
 ##############
@@ -155,7 +153,10 @@ mv ${APP_TGZ} ${APP_ROOT}/${APP}_packages/
 echo ""
 echo ""
 echo "${APP} release is prepped for use and uploaded to docker registry or copied to ${APP}_packages"
-echo "Next step is to install a running instace of ${APP}"
+echo ""
+echo "If you want to use pyedwin, it is recommended that you install that package now, and run the get_package.sh for pyedwin prior to installing zeppelin instances"
+echo ""
+echo "Then, next step is to install a running instace of ${APP}"
 echo ""
 echo "> ${APP_ROOT}/install_instance.sh"
 echo ""

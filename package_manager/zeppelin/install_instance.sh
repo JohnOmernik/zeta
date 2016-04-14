@@ -54,6 +54,8 @@ sudo cp ${APP_USER_ID_DIR}/conf/zeppelin-site.xml.template ${APP_USER_ID_DIR}/co
 
 sudo sed -i -r "s/<value>8080<\/value>/<value>${APP_PORT}<\/value>/" ${APP_USER_ID_DIR}/conf/zeppelin-site.xml
 
+sudo sed -i -r "s/org\.apache\.zeppelin\.spark\.PySparkInterpreter/org.apache.zeppelin.spark.PySparkInterpreter,org.apache.zeppelin.pyedwin.PyedwinInterpreter/" ${APP_USER_ID_DIR}/conf/zeppelin-site.xml
+
 sudo cp ${APP_USER_ID_DIR}/conf/zeppelin-env.sh.template ${APP_USER_ID_DIR}/conf/zeppelin-env.sh
 
 sudo chown -R ${APP_USER}:${APP_USER} ${APP_USER_DIR}/zeppelin
