@@ -68,9 +68,11 @@ if [[ -f $DIR/$CONFIG_FL &&  -r $DIR/$CONFIG_FL ]]; then
     MESOS_DEV_PASS=${MESOS_DEV_PASS:-`mkpasswd`}
     MAPR_HOME=${MAPR_HOME:-/opt/mapr}
     MAPR_UID=${MAPR_UID:-2000}
+    MAPR_GID=${MAPR_GID:-2000}
     MAPR_USER=${MAPR_USER:-mapr}
     MAPR_GROUP=${MAPR_GROUP:-mapr}
-    ZETAADM_UID=${ZETAADM_UID:-2001}
+    ZETAADM_UID=${ZETAADM_UID:-2500}
+    ZETAADM_GID=${ZETAADM_GID:-2500}
     ZETAADM_USER=${ZETAADM_USERS:-zetaadm}
     ZETAADM_GROUP=${ZETAADM_GROUP:-zetaadm}
 
@@ -82,7 +84,7 @@ if [[ -f $DIR/$CONFIG_FL &&  -r $DIR/$CONFIG_FL ]]; then
     cat $DIR/$CONFIG_FL > $DIR/$DEFAULT_OUTCONF
 
     # Standardize the config file to be distributed
-    impt_conf=(IHOST IHOST_PORT MESOS_DOMAIN MESOS_VER MESOS_RPM_ROOT MESOS_RPM MESOS_AGENT_USER MESOS_AGENT_PASS MESOS_PROD_PRNCPL MESOS_PROD_PASS MESOS_DEV_PRNCPL MESOS_DEV_PASS MAPR_HOME MAPR_UID MAPR_USER MAPR_GROUP ZETAADM_UID ZETAADM_USER ZETAADM_GROUP)
+    impt_conf=(IHOST IHOST_PORT MESOS_DOMAIN MESOS_VER MESOS_RPM_ROOT MESOS_RPM MESOS_AGENT_USER MESOS_AGENT_PASS MESOS_PROD_PRNCPL MESOS_PROD_PASS MESOS_DEV_PRNCPL MESOS_DEV_PASS MAPR_HOME MAPR_UID MAPR_GID MAPR_USER MAPR_GROUP ZETAADM_UID ZETAADM_GID ZETAADM_USER ZETAADM_GROUP)
 
     info "Outputting final config file format"
     for cfvar in "${impt_conf[@]}"
@@ -114,11 +116,16 @@ fi
 
  # Pull Node Data
 info "Pulling available nodes..."
-NODES=$($SSHCMD "sudo maprcli node list -columns ip | awk 'NR > 1 {print \$2}'")
+NODES=$($SSHCMD "sudo maprcli node list -columns ip | awk 'NR > 1 {print \$2}'" 2>/dev/null)
 NODE_CNT=$(echo $NODES | wc -w | xargs)
 if [[ "$NODES" == "" ]]; then err "Did not find any nodes" && exit 1; fi
 if [[ $NODE_CNT -le 2 ]]; then err "Need > 2 nodes to work" && exit 1; fi
 info "Found $NODE_CNT MapR nodes from the cluster"
+
+# Get cluster name from cluster... duh
+CLUSTERNAME=`$SSHCMD 'echo -n $(ls /mapr)' 2>/dev/null`;
+info "Cluster is named [${CLUSTERNAME}]"
+echo "CLUSTERNAME=\"${CLUSTERNAME}\"" >> $DIR/config.final
 
 # Updates Packages
 info "Running the Packager to get the latest packages"
@@ -126,37 +133,64 @@ update_packages
 
 # Upload
 info "Uploading the private key"
-$SCPCMD ${PRVKEY} $SSHHOST:/home/${IUSER}/.ssh/id_rsa
+$SCPCMD ${PRVKEY} $SSHHOST:/home/${IUSER}/.ssh/id_rsa > /dev/null 2>&1
 
 # Use your public key linked to AWS to encrypt credentials and save it into the config file
 ssh-keygen -f ~/.ssh/id_rsa.pub -e -m PKCS8 > $DIR/encrypt.pub
 
 info "Gathering credentials..."
-MAPR_PASS1=''; MAPR_PASS2='adsasf'
-ZETAADM_PASS1=''; ZETAADM_PASS2='adsasf'
+MAPR_PASS1=''; MAPR_PASS2='adsasf';
+ZETAADM_PASS1=''; ZETAADM_PASS2='adsasf';
 
-while [ "$MAPR_PASS1" != "$MAPR_PASS2" ]
+while [ "$MAPR_PASS1" != "$MAPR_PASS2" ] || [ -z $MAPR_PASS1 ]
 do
     read -rs -p "[PROMPT] Enter a password for user [$MAPR_USER]:" MAPR_PASS1
     echo -e ""
     read -rs -p "[PROMPT] Re-Enter a password for user [$MAPR_USER]:" MAPR_PASS2
     echo -e ""
-    if [ "$MAPR_PASS1" != "$MAPR_PASS2" ]; then warn "Does not match, try again."; fi
+    if [ "$MAPR_PASS1" != "$MAPR_PASS2" ] || [ -z $MAPR_PASS1 ] || [ -z $MAPR_PASS2 ]; then warn "Empty or non-matching password, try again."; fi
 done
 info "Encrypted [$MAPR_USER] password and included it in config.final"
 MAPR_PASS_ENCRYPT=`echo ${MAPR_PASS1} | openssl rsautl -encrypt -pubin -inkey ${DIR}/encrypt.pub | base64`
+echo "MAPR_PASS_ENCRYPT=\"${MAPR_PASS_ENCRYPT}\"" >> $DIR/config.final
+MAPR_PASS1=;MAPR_PASS2=; # Paranoid
 
-while [ "$ZETAADM_PASS1" != "$ZETAADM_PASS2" ]
+while [ "$ZETAADM_PASS1" != "$ZETAADM_PASS2" ] || [ -z $ZETAADM_PASS1 ]
 do
     read -rs -p "[PROMPT] Enter a password for user [$ZETAADM_USER]:" ZETAADM_PASS1
     echo -e ""
     read -rs -p "[PROMPT] Re-Enter a password for user [$ZETAADM_USER]:" ZETAADM_PASS2
     echo -e ""
-    if [ "$ZETAADM_PASS" != "$ZETAADM_PASS2" ]; then warn "Does not match, try again."; fi
+    if [ "$ZETAADM_PASS" != "$ZETAADM_PASS2" ] || [ -z $ZETAADM_PASS1 ] || [ -z $ZETAADM_PASS2 ]; then warn "Empty or non-matching password, try again."; fi
 done
 
 info "Encrypted [$ZETAADM_USER] password and included it in config.final"
 ZETAADM_PASS_ENCRYPT=`echo ${ZETAADM_PASS1} | openssl rsautl -encrypt -pubin -inkey ${DIR}/encrypt.pub | base64`
+echo "ZETAADM_PASS_ENCRYPT=\"${ZETAADM_PASS_ENCRYPT}\"" >> $DIR/config.final
+ZETAADM_PASS1=;ZETAADM_PASS2=; # Paranoid
+
+info "Make user sync program to be run on all nodes"
+SCRIPT="${DIR}/testing.sh"
+cat > $SCRIPT << EOF
+#!/bin/env bash
+yum -y update
+if ! id -u "${ZETAADM_USER}" >/dev/null 2>&1; then
+    adduser --uid ${ZETAADM_UID} --gid ${ZETAADM_GID}
+else
+    # Make sure the UID # matches
+    if [[ \`id -u ${ZETAADM_USER}\` == ${ZETAADM_UID} ]]; then
+        usermod -u ${ZETAADM_UID} ${ZETADM_USER}
+    fi
+    if [[ \`id -u ${ZETAADM_USER}\` == ${ZETAADM_GID}]]; then
+
+    fi
+fi
+
+MAPR_PASS=echo "${MAPR_PASS_ENCRYPT}" | base64 -D | openssl rsautl -decrypt -inkey /home/${IUSER}/.ssh/id_rsa
+ZETAADM_PASS=echo "${ZETAADM_PASS_ENCRYPT}" | base64 -D | openssl rsautl -decrypt -inkey /home/${IUSER}/.ssh/id_rsa
+echo `$MAPR_PASS` | passwd --stdin ${MAPR_USER}
+echo `$ZETAADM_PASS` | passwd --stdin ${ZETADM_USER}
+EOF
 
 info "Packing everything up and uploading to /home/${IUSER}/."
 if [[ -f /tmp/uploader.tar.gz ]]; then rm -f /tmp/uploader.tar.gz; fi
@@ -167,6 +201,3 @@ if [[ $? -ne 0 ]]; then
     err "Error uploading data to the server"
     exit 1
 fi
-
-
-$
