@@ -43,9 +43,6 @@ rm -rf ${APP_HOME}
 # Provide instructions for next steps
 echo ""
 echo ""
-echo "$APP instance ${APP_ID} installed at ${APP_HOME} and ready to go"
-echo "To start please run: "
-echo ""
-echo "> ${APP_HOME}/start_instance.sh"
+echo "$APP instance ${APP_ID} installed into $ZEP_INSTANCE"
 echo ""
 echo ""

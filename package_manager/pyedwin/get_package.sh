@@ -36,7 +36,10 @@ cp /mapr/$CLUSTERNAME/mesos/$MESOS_ROLE/zeppelin/zeppelin_packages/zeppelin-inte
 ./package_edwin.sh
 
 tar zxf ./${APP_TGZ}
-sed -i "s@/zeppelin/interpreter/pyedwin/edwin_org.json@${APP_PACKAGES}/edwin_org.json@" ./pyedwin/pyedwin.py
+sed -i "s@\./edwin_main.json@/zeppelin/interpreter/pyedwin/edwin_main.json@" ./pyedwin/pyedwin.py
+sed -i "s@\./edwin_org.json@${APP_PACKAGES}/edwin_org.json@" ./pyedwin/pyedwin.py
+sed -i "s@\./edwin_user.json@/conf/edwin_user.json@" ./pyedwin/pyedwin.py
+
 rm -rf ./${APP_TGZ}
 tar zcf ./${APP_TGZ} ./pyedwin
 
