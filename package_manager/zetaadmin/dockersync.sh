@@ -5,7 +5,11 @@
 
 ZETA_SYNC="/zeta_sync"
 USER_NAME=$1
-#BASE_IMG=$2
+TMPDIR=$2
+
+if [ "$TMPDIR" != "" ]; then
+    ZETA_SYNC=$TMPDIR
+fi
 
 GROUP_FILE="zetagroups.list"
 USER_FILE="zetausers.list"
