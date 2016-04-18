@@ -39,7 +39,7 @@ for n in $NODES
 do
     g=$(echo $n|grep -E "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}")
     if [ "$g" != "" ]; then
-        echo $g >> ./nodes.list
+        echo $g|cut -d"," -f1  >> ./nodes.list
     fi
 done
 cat nodes.list
