@@ -17,6 +17,23 @@ if [ "$SUDO_TEST" != "root" ]; then
     exit 1
 fi
 
+DIST_CHK=$(lsb_release -a)
+UB_CHK=$(echo $DIST_CHK|grep Ubuntu)
+RH_CHK=$(echo $DIST_CHK|grep RedHat)
+CO_CHK=$(echo $DIST_CHK|grep CentOS)
+
+if [ "$UB_CHK" != "" ]; then
+    INST_TYPE="ubuntu"
+    echo "Ubuntu"
+elif [ "$RH_CHK" != "" ] || [ "$CO_CHK" != ""]; then
+    INST_TYPE="rh_centos"
+    echo "Redhat"
+else
+    echo "Unknown lsb_release -a version at this time only ubuntu, centos, and redhat is supported"
+    echo $DIST_CHK
+    exit 1
+fi
+
 ####################
 ###### ADD zetadm user and sync passwords on mapr User
 echo "Prior to installing Zeta, there are two steps that must be taken to ensure two users exist and are in sync across the nodes"
@@ -80,13 +97,27 @@ do
 done
 
 
+if [ "$INST_TYPE" == "ubuntu" ]; then
+   ADD="adduser --disabled-login --gecos '' --uid=2500 zetaadm"
+   ZETA="echo \"zetaadm:$zetaadm_PASS1\"|chpasswd"
+   MAPR="echo \"mapr:$mapr_PASS1\"|chpasswd"
+elif [ "$INST_TYPE" == "rh_centos" ]; then
+   ADD="adduser --uid 2500 zetaadm"
+   ZETA="echo \"$zetaadm_PASS1\"|passwd --stdin zetaadm"
+   MAPR="echo \"$mapr_PASS1\"|passwd --stdin mapr"
+else
+    echo "Relase not found, not sure why we are here, exiting"
+    exit 1
+fi
+
 SCRIPT="/mapr/${CLUSTERNAME}/tmp/userupdate.sh"
+
 cat > $SCRIPT << EOF
 #!/bin/bash
-adduser --uid 2500 zetaadm
+$ADD
 echo "zetaadm ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
-echo "$zetaadm_PASS1"|passwd --stdin zetaadm
-echo "$mapr_PASS1"|passwd --stdin mapr
+$ZETA
+$MAPR
 EOF
 
 chmod 770 $SCRIPT
