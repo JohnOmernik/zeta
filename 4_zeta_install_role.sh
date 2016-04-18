@@ -129,6 +129,12 @@ fi
 cat > \$ZETA_ENV_FILE << EOL3
 #!/bin/bash
 CLUSTERNAME=\\\$(ls /mapr)
+
+if [ "\\\$CLUSTERNAME" == "" ]; then
+    CLUSTERNAME="$CLUSTERNAME"
+fi
+
+
 # Source Master Zeta ENV File
 . /mapr/\\\$CLUSTERNAME/mesos/kstore/env/master_env.sh
 # START GLOBAL ENV Variables for Zeta Environment
