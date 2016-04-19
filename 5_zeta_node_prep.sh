@@ -20,27 +20,32 @@ CLUSTERNAME=$(ls /mapr)
 MESOS_ROLE="prod"
 . /mapr/${CLUSTERNAME}/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
 
-DIST_CHK=$(lsb_release -a)
-UB_CHK=$(echo $DIST_CHK|grep Ubuntu)
-RH_CHK=$(echo $DIST_CHK|grep RedHat)
-CO_CHK=$(echo $DIST_CHK|grep CentOS)
+INST_FILE="/mapr/$CLUSTERNAME/user/zetaadm/cluster_inst/zeta_node_prep.sh"
 
-if [ "$UB_CHK" != "" ]; then
+#------------------------------------------------SOF
+cat > ${INST_FILE} << EOF
+#!/bin/bash
+CLUSTERNAME=\$(ls /mapr)
+
+DIST_CHK=\$(lsb_release -a)
+UB_CHK=\$(echo \$DIST_CHK|grep Ubuntu)
+RH_CHK=\$(echo \$DIST_CHK|grep RedHat)
+CO_CHK=\$(echo \$DIST_CHK|grep CentOS)
+
+if [ "\$UB_CHK" != "" ]; then
     INST_TYPE="ubuntu"
-    echo "Ubuntu"
-elif [ "$RH_CHK" != "" ] || [ "$CO_CHK" != ""]; then
+elif [ "\$RH_CHK" != "" ] || [ "\$CO_CHK" != ""]; then
     INST_TYPE="rh_centos"
-    echo "Redhat"
 else
     echo "Unknown lsb_release -a version at this time only ubuntu, centos, and redhat is supported"
-    echo $DIST_CHK
+    echo \$DIST_CHK
     exit 1
 fi
 
-if [ "$INST_TYPE" == "ubuntu" ]; then
+if [ "\$INST_TYPE" == "ubuntu" ]; then
 NANO="sudo apt-get install -y nano"
 MAPR_RM="sudo apt-get remove -y mapr-drill;sudo apt-get remove -y mapr-historyserver;sudo apt-get remove -y mapr-hivemetastore;sudo apt-get remove -y mapr-hiveserver2;sudo apt-get remove -y mapr-nodemanger;sudo apt-get remove -y mapr-resourcemanager"
-elif [ "$INST_TYPE" == "rh_centos" ]; then
+elif [ "\$INST_TYPE" == "rh_centos" ]; then
 NANO="sudo yum install -y nano"
 MAPR_RM="sudo yum -y remove mapr-drill;sudo yum -y remove mapr-historyserver;sudo yum -y remove mapr-hivemetastore;sudo yum -y remove mapr-hiveserver2;sudo yum -y remove mapr-nodemanager;sudo yum -y remove mapr-resourcemanager"
 else
@@ -48,14 +53,9 @@ else
     exit 1
 fi
 
-INST_FILE="/mapr/$CLUSTERNAME/user/zetaadm/cluster_inst/zeta_node_prep.sh"
-
-cat > ${INST_FILE} << EOF
-#!/bin/bash
-CLUSTERNAME=\$(ls /mapr)
 #################
 echo "Installing nano... don't fight it"
-$NANO
+\$NANO
 sudo sed -i -r 's/\# set tabsize 8/set tabsize 4/' /etc/nanorc
 sudo sed -i -r 's/\# set tabstospaces/set tabstospaces/' /etc/nanorc
 sudo sed -i -r 's/\# include /include /' /etc/nanorc
@@ -67,7 +67,7 @@ sudo sed -i -r 's/\# include /include /' /etc/nanorc
 ####################
 #Remove Roles for Prep to Zeta
 echo "Removing all non-FS based roles in MapR"
-$MAPR_RM
+\$MAPR_RM
 
 # Refresh Roles
 echo "Refreshing Roles After Removal"
@@ -121,11 +121,12 @@ sudo service mapr-warden restart
 touch /tmp/node_prep
 
 EOF
+#--------------------------------------------------EOF
+
+
 chmod +x ${INST_FILE}
 
-
 /mapr/$CLUSTERNAME/user/zetaadm/zetaadmin/run_cmd_no_return.sh "${INST_FILE}"
-
 
 NUM_NODES=$(echo "$ZETA_NODES"|tr " " "\n"|wc -l)
 
