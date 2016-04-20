@@ -34,7 +34,7 @@ CO_CHK=\$(echo \$DIST_CHK|grep CentOS)
 
 if [ "\$UB_CHK" != "" ]; then
     INST_TYPE="ubuntu"
-elif [ "\$RH_CHK" != "" ] || [ "\$CO_CHK" != ""]; then
+elif [ "\$RH_CHK" != "" ] || [ "\$CO_CHK" != "" ]; then
     INST_TYPE="rh_centos"
 else
     echo "Unknown lsb_release -a version at this time only ubuntu, centos, and redhat is supported"

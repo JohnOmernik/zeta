@@ -13,7 +13,7 @@ fi
 # Change to the root dir
 cd "$(dirname "$0")"
 
-. ./cluster.conf
+. /mapr/$CLUSTERNAME/user/zetaadm/cluster_inst/cluster.conf
 
 # Get the Zookeepers from the warden.conf file
 ZK_SPEC=$(cat /opt/mapr/conf/warden.conf|grep zookeeper\.servers|sed "s/zookeeper\.servers=//g")
