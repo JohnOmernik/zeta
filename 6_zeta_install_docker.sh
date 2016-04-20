@@ -10,6 +10,38 @@ INST_FILE="/mapr/$CLUSTERNAME/user/zetaadm/cluster_inst/zeta_install_docker.sh"
 
 cat > $INST_FILE << EOL
 #!/bin/bash
+
+DIST_CHK=\$(lsb_release -a)
+UB_CHK=\$(echo \$DIST_CHK|grep Ubuntu)
+RH_CHK=\$(echo \$DIST_CHK|grep RedHat)
+CO_CHK=\$(echo \$DIST_CHK|grep CentOS)
+
+if [ "\$UB_CHK" != "" ]; then
+    INST_TYPE="ubuntu"
+elif [ "\$RH_CHK" != "" ] || [ "\$CO_CHK" != "" ]; then
+    INST_TYPE="rh_centos"
+else
+    echo "Unknown lsb_release -a version at this time only ubuntu, centos, and redhat is supported"
+    echo \$DIST_CHK
+    exit 1
+fi
+
+
+
+if [ "\$INST_TYPE" == "ubuntu" ]; then
+# update apt-get
+sudo apt-get -y update
+sudo apt-get install -y apt-transport-https ca-certificates
+sudo apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
+echo "deb https://apt.dockerproject.org/repo ubuntu-trusty main" > ~/docker.list
+sudo mv /home/zetaadm/docker.list /etc/apt/sources.list.d/
+sudo apt-get -y update
+sudo apt-get install -y docker-engine
+
+# Start Docker
+sudo service docker start
+
+elif [ "\$INST_TYPE" == "rh_centos" ]; then
 # update yum
 sudo yum -y update
 
@@ -28,6 +60,10 @@ sudo yum -y install docker-engine
 
 # Start Docker
 sudo service docker start
+else
+    echo "Error"
+    exit 1
+fi
 EOL
 
 

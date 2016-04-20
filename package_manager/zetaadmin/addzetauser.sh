@@ -13,6 +13,26 @@ GROUP_LIST="zetagroups.list"
 USER_NAME=$1
 
 
+DIST_CHK=$(lsb_release -a)
+UB_CHK=$(echo $DIST_CHK|grep Ubuntu)
+RH_CHK=$(echo $DIST_CHK|grep RedHat)
+CO_CHK=$(echo $DIST_CHK|grep CentOS)
+
+if [ "$UB_CHK" != "" ]; then
+    INST_TYPE="ubuntu"
+    echo "Ubuntu"
+elif [ "$RH_CHK" != "" ] || [ "$CO_CHK" != "" ]; then
+    INST_TYPE="rh_centos"
+    echo "Redhat"
+else
+    echo "Unknown lsb_release -a version at this time only ubuntu, centos, and redhat is supported"
+    echo $DIST_CHK
+    exit 1
+fi
+
+
+
+
 if [ "$USER_NAME" == "" ]; then
     echo "User cannot be blank"
     echo "./addzetauser.sh %USERNAME%"
@@ -82,14 +102,22 @@ do
 done
 
 
-
-
+if [ "$INST_TYPE" == "ubuntu" ]; then
+   ADD="adduser --disabled-login --gecos '' --uid=$ZETA_UID $USER_NAME"
+   PASS="echo \"$USER_NAME:$USER_PASS\"|chpasswd"
+elif [ "$INST_TYPE" == "rh_centos" ]; then
+   ADD="adduser --uid $ZETA_UID $USER_NAME"
+   PASS="echo \"$USER_PASS\"|passwd --stdin $USER_NAME"
+else
+    echo "Relase not found, not sure why we are here, exiting"
+    exit 1
+fi
 
 USCRIPT="/mapr/${CLUSTERNAME}/user/zetaadm/create_${USER_NAME}.sh"
 cat > $USCRIPT << EOF99
 #!/bin/bash
-adduser --uid $ZETA_UID $USER_NAME
-echo "$USER_PASS"|passwd --stdin $USER_NAME
+$ADD
+$PASS
 EOF99
 
 echo "Creating User"

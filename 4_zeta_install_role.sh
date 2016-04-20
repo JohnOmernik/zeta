@@ -4,7 +4,7 @@ CLUSTERNAME=$(ls /mapr)
 
 INST_FILE="/mapr/$CLUSTERNAME/user/zetaadm/cluster_inst/zeta_install_role.sh"
 
-. /mapr/${CLUSTERNAME}/user/zetaadm/cluster.conf
+. /mapr/${CLUSTERNAME}/user/zetaadm/cluster_inst/cluster.conf
 
 cat > $INST_FILE << EOALL
 #!/bin/bash

@@ -65,11 +65,25 @@ ${MARATHON_SUBMIT} ${APP_HOME}/${APP_ID}.marathon ${MAR_HOST}
 echo ""
 echo ""
 sleep 5
-echo "Updating resolve.conf This won't survive reboot. This is fragile make stronger for production"
-echo ""
-echo ""
-/home/zetaadm/zetaadmin/run_cmd.sh "sudo sed -i -r 's/nameserver $RESOLVER/nameserver $IP/' /etc/resolv.conf"
-echo ""
+
+echo "We can update your resolve.conf on all nodes but this is only a temporary measure"
+echo "If you don't have other plans, like setting up a real forward lookup zone, then answer Y"
+echo "Otherwise type anything else to skip updating your resolve.conf"
+
+read -e -p "Should we update your resolve.conf on all nodes with the mesos-dns service? This won't survive a reboot!: " -i "Y" APP_UPDATE
+
+if [ "$APP_UPDATE" == "Y" ]; then
+    echo "Updating resolve.conf This won't survive reboot. This is fragile make stronger for production"
+    echo ""
+    echo ""
+    /home/zetaadm/zetaadmin/run_cmd.sh "sudo sed -i -r 's/nameserver $RESOLVER/nameserver $IP/' /etc/resolv.conf"
+    echo ""
+    echo ""
+else
+    echo "Not updating resolv.conf"
+fi
+
+
 echo "Mesos DNS is installed"
 
 
