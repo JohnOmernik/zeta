@@ -2,13 +2,13 @@
 
 # SANE DEFAULTS
 LOG=/tmp/configure_mapr.log
-CONFIG_FL=cluster.conf.default
+CONFIG_FL=cluster.conf
 DIR="$(command cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 DEFAULT_MESOS_VER=0.27.2
 DEFAULT_MESOS_RPM_ROOT="http://repos.mesosphere.com/el/7/x86_64/RPMS/"
 DEFAULT_MESOS_RPM="mesos-0.27.2-2.0.15.centos701406.x86_64.rpm"
 DEFAULT_IUSER=ec2-user
-DEFAULT_OUTCONF=cluster.conf.final
+DEFAULT_OUTCONF=$DIR/tmp/cluster.conf.final
 
 cd $DIR
 if [[ -e $LOG ]]; then rm $LOG; fi
@@ -81,7 +81,7 @@ if [[ -f $DIR/$CONFIG_FL &&  -r $DIR/$CONFIG_FL ]]; then
 
     # Output a standard configuration Field
     if [[ -f $DIR/$DEFAULT_OUTCONF ]]; then rm $DIR/$DEFAULT_OUTCONF; fi
-    cat $DIR/$CONFIG_FL > $DIR/$DEFAULT_OUTCONF
+    cat $DIR/$CONFIG_FL > $DEFAULT_OUTCONF
 
     # Standardize the config file to be distributed
     impt_conf=(IHOST IHOST_PORT MESOS_DOMAIN MESOS_VER MESOS_RPM_ROOT MESOS_RPM MESOS_AGENT_USER MESOS_AGENT_PASS MESOS_PROD_PRNCPL MESOS_PROD_PASS MESOS_DEV_PRNCPL MESOS_DEV_PASS MAPR_HOME MAPR_UID MAPR_GID MAPR_USER MAPR_GROUP ZETAADM_UID ZETAADM_GID ZETAADM_USER ZETAADM_GROUP)
@@ -91,7 +91,7 @@ if [[ -f $DIR/$CONFIG_FL &&  -r $DIR/$CONFIG_FL ]]; then
     do
         hldr="${cfvar}"
         echo "$cfvar=${!hldr}"
-    done > $DIR/config.final
+    done > $DEFAULT_OUTCONF
 
     # Display Mesos Creds
     info "MESOS AGENT: $MESOS_AGENT_USER / $MESOS_AGENT_PASS"
@@ -125,7 +125,7 @@ info "Found $NODE_CNT MapR nodes from the cluster"
 # Get cluster name from cluster... duh
 CLUSTERNAME=`$SSHCMD 'echo -n $(ls /mapr)' 2>/dev/null`;
 info "Cluster is named [${CLUSTERNAME}]"
-echo "CLUSTERNAME=\"${CLUSTERNAME}\"" >> $DIR/config.final
+echo "CLUSTERNAME=\"${CLUSTERNAME}\"" >> $DEFAULT_OUTCONF
 
 # Updates Packages
 info "Running the Packager to get the latest packages"
@@ -136,7 +136,7 @@ info "Uploading the private key"
 $SCPCMD ${PRVKEY} $SSHHOST:/home/${IUSER}/.ssh/id_rsa > /dev/null 2>&1
 
 # Use your public key linked to AWS to encrypt credentials and save it into the config file
-ssh-keygen -f ~/.ssh/id_rsa.pub -e -m PKCS8 > $DIR/encrypt.pub
+ssh-keygen -f ~/.ssh/id_rsa.pub -e -m PKCS8 > $DIR/tmp/encrypt.pub
 
 info "Gathering credentials..."
 MAPR_PASS1=''; MAPR_PASS2='adsasf';
@@ -151,8 +151,8 @@ do
     if [ "$MAPR_PASS1" != "$MAPR_PASS2" ] || [ -z $MAPR_PASS1 ] || [ -z $MAPR_PASS2 ]; then warn "Empty or non-matching password, try again."; fi
 done
 info "Encrypted [$MAPR_USER] password and included it in config.final"
-MAPR_PASS_ENCRYPT=`echo ${MAPR_PASS1} | openssl rsautl -encrypt -pubin -inkey ${DIR}/encrypt.pub | base64`
-echo "MAPR_PASS_ENCRYPT=\"${MAPR_PASS_ENCRYPT}\"" >> $DIR/config.final
+MAPR_PASS_ENCRYPT=`echo ${MAPR_PASS1} | openssl rsautl -encrypt -pubin -inkey ${DIR}/tmp/encrypt.pub | base64`
+echo "MAPR_PASS_ENCRYPT=\"${MAPR_PASS_ENCRYPT}\"" >> $DEFAULT_OUTCONF
 MAPR_PASS1=;MAPR_PASS2=; # Paranoid
 
 while [ "$ZETAADM_PASS1" != "$ZETAADM_PASS2" ] || [ -z $ZETAADM_PASS1 ]
@@ -165,31 +165,31 @@ do
 done
 
 info "Encrypted [$ZETAADM_USER] password and included it in config.final"
-ZETAADM_PASS_ENCRYPT=`echo ${ZETAADM_PASS1} | openssl rsautl -encrypt -pubin -inkey ${DIR}/encrypt.pub | base64`
-echo "ZETAADM_PASS_ENCRYPT=\"${ZETAADM_PASS_ENCRYPT}\"" >> $DIR/config.final
+ZETAADM_PASS_ENCRYPT=`echo ${ZETAADM_PASS1} | openssl rsautl -encrypt -pubin -inkey ${DIR}/tmp/encrypt.pub | base64`
+echo "ZETAADM_PASS_ENCRYPT=\"${ZETAADM_PASS_ENCRYPT}\"" >> $DEFAULT_OUTCONF
 ZETAADM_PASS1=;ZETAADM_PASS2=; # Paranoid
 
 info "Make user sync program to be run on all nodes"
-SCRIPT="${DIR}/testing.sh"
+SCRIPT="${DIR}/tmp/make_user.sh"
 cat > $SCRIPT << EOF
 #!/bin/env bash
 yum -y update
 if ! id -u "${ZETAADM_USER}" >/dev/null 2>&1; then
     adduser --uid ${ZETAADM_UID} --gid ${ZETAADM_GID}
-else
-    # Make sure the UID # matches
-    if [[ \`id -u ${ZETAADM_USER}\` == ${ZETAADM_UID} ]]; then
-        usermod -u ${ZETAADM_UID} ${ZETADM_USER}
-    fi
-    if [[ \`id -u ${ZETAADM_USER}\` == ${ZETAADM_GID}]]; then
-
-    fi
+fi
+# Make sure the UID # matches
+if [[ \`id -u ${ZETAADM_USER}\` != ${ZETAADM_UID} ]]; then
+    usermod -u ${ZETAADM_UID} ${ZETAADM_USER}
 fi
 
-MAPR_PASS=echo "${MAPR_PASS_ENCRYPT}" | base64 -D | openssl rsautl -decrypt -inkey /home/${IUSER}/.ssh/id_rsa
-ZETAADM_PASS=echo "${ZETAADM_PASS_ENCRYPT}" | base64 -D | openssl rsautl -decrypt -inkey /home/${IUSER}/.ssh/id_rsa
-echo `$MAPR_PASS` | passwd --stdin ${MAPR_USER}
-echo `$ZETAADM_PASS` | passwd --stdin ${ZETADM_USER}
+if [[ \`id -g ${ZETAADM_USER}\` != ${ZETAADM_GID}]]; then
+    usermod -g ${ZETAADM_GID} ${ZETAADM_USER}
+fi
+
+MAPR_PASS=\`echo "${MAPR_PASS_ENCRYPT}" | base64 -D | openssl rsautl -decrypt -inkey /home/${IUSER}/.ssh/id_rsa\`
+ZETAADM_PASS=\`echo "${ZETAADM_PASS_ENCRYPT}" | base64 -D | openssl rsautl -decrypt -inkey /home/${IUSER}/.ssh/id_rsa
+echo \`\$MAPR_PASS\` | passwd --stdin ${MAPR_USER}
+echo \`\$ZETAADM_PASS\` | passwd --stdin ${ZETAADM_USER}
 EOF
 
 info "Packing everything up and uploading to /home/${IUSER}/."
