@@ -181,7 +181,7 @@ EOALL
 
 chmod +x $INST_FILE
 $INST_FILE prod $MESOS_PROD_PRNCPL $MESOS_PROD_PASS
-$INST_FILE dev $MESOS_DEV_PRNCPL $MESOS_DEV_PASS
+#$INST_FILE dev $MESOS_DEV_PRNCPL $MESOS_DEV_PASS
 
 echo "Role Install Script and roles prod and dev installed. Now run script 5_"
 

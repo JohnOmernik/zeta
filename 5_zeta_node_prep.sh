@@ -43,11 +43,13 @@ else
 fi
 
 if [ "\$INST_TYPE" == "ubuntu" ]; then
-NANO="sudo apt-get install -y nano"
-MAPR_RM="sudo apt-get remove -y mapr-drill;sudo apt-get remove -y mapr-historyserver;sudo apt-get remove -y mapr-hivemetastore;sudo apt-get remove -y mapr-hiveserver2;sudo apt-get remove -y mapr-nodemanger;sudo apt-get remove -y mapr-resourcemanager"
+    NANO="sudo apt-get install -y nano"
+    DCOS="sudo apt-get -y install tar xz-utils unzip curl ipset wget python-dev python-virtualenv python-pip"
+    MAPR_RM="sudo apt-get remove -y mapr-drill;sudo apt-get remove -y mapr-historyserver;sudo apt-get remove -y mapr-hivemetastore;sudo apt-get remove -y mapr-hiveserver2;sudo apt-get remove -y mapr-nodemanger;sudo apt-get remove -y mapr-resourcemanager"
 elif [ "\$INST_TYPE" == "rh_centos" ]; then
-NANO="sudo yum install -y nano"
-MAPR_RM="sudo yum -y remove mapr-drill;sudo yum -y remove mapr-historyserver;sudo yum -y remove mapr-hivemetastore;sudo yum -y remove mapr-hiveserver2;sudo yum -y remove mapr-nodemanager;sudo yum -y remove mapr-resourcemanager"
+    DCOS="sudo yum install -y tar xz unzip curl ipset wget python-devel python-virtualenv python-pip"
+    NANO="sudo yum install -y nano"
+    MAPR_RM="sudo yum -y remove mapr-drill;sudo yum -y remove mapr-historyserver;sudo yum -y remove mapr-hivemetastore;sudo yum -y remove mapr-hiveserver2;sudo yum -y remove mapr-nodemanager;sudo yum -y remove mapr-resourcemanager"
 else
     echo "Error"
     exit 1
@@ -56,9 +58,26 @@ fi
 #################
 echo "Installing nano... don't fight it"
 \$NANO
+
 sudo sed -i -r 's/\# set tabsize 8/set tabsize 4/' /etc/nanorc
 sudo sed -i -r 's/\# set tabstospaces/set tabstospaces/' /etc/nanorc
 sudo sed -i -r 's/\# include /include /' /etc/nanorc
+
+
+echo "Installing other DCOS Reqs"
+\$DCOS
+
+
+echo "Adding No Group"
+sudo groupadd nogroup 
+
+
+echo "Setting up file for Docker when it's installed"
+sudo mkdir -p /etc/systemd/system/docker.service.d && sudo tee /etc/systemd/system/docker.service.d/override.conf <<- EOI8
+[Service]
+ExecStart=
+ExecStart=/usr/bin/docker daemon --storage-driver=overlay -H fd://
+EOI8
 
 
 #################
@@ -78,7 +97,7 @@ echo "Updating Warden settings to handle Mesos "
 # Back up Warden file
 sudo cp /opt/mapr/conf/warden.conf /opt/mapr/conf/warden.conf.bak
 
-#Set Max Pervent for MFS to 35 % 
+#Set Max Pervent for MFS to 35 %
 sudo sed -i -r 's/service\.command\.mfs\.heapsize\.maxpercent=.*/service\.command\.mfs\.heapsize\.maxpercent=35/' /opt/mapr/conf/warden.conf.bak
 
 #Set no reservations for Map Reduce V1

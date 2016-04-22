@@ -5,9 +5,8 @@ MARATHON_INSTANCE="prod"
 . /mapr/${CLUSTERNAME}/mesos/kstore/env/zeta_${CLUSTERNAME}_${MARATHON_INSTANCE}.sh
 . /mapr/${CLUSTERNAME}/mesos/kstore/${MARATHON_INSTANCE}/marathon/marathon.sh
 
-# This is for prod.
 
-MARATHON_URL="http://marathon${MARATHON_INSTANCE}.${ZETA_MESOS_DOMAIN}:${ZETA_MARATHON_PORT}/v2/apps"
+MARATHON_URL="http://${ZETA_MARATHON_ENV}.${ZETA_MESOS_DOMAIN}:${ZETA_MARATHON_PORT}/v2/apps"
 
 echo "$MARATHON_URL"
 
@@ -22,4 +21,8 @@ if [ "$MARJSON" == "" ]; then
    exit 0
 fi
 
-curl -X POST -u "$MARATHON_USER:$MARATHON_PASS" -H "Content-Type: application/json" $MARATHON_URL -d@$MARJSON
+if [ "${MARATHON_USER}" == "" ]; then
+    curl -X POST -H "Content-Type: application/json" $MARATHON_URL -d@$MARJSON
+else
+    curl -X POST -u "$MARATHON_USER:$MARATHON_PASS" -H "Content-Type: application/json" $MARATHON_URL -d@$MARJSON
+fi

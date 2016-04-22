@@ -60,14 +60,13 @@ cat > ${APP_HOME}/${APP_ID}.marathon << EOF
 EOF
 
 
-
 # Update Docker on all nodes to use insecure registry - Update for multiple registries
 cat > /mapr/$CLUSTERNAME/user/zetaadm/5_update_docker.sh << EOF2
 sudo mkdir -p /etc/systemd/system/docker.service.d
-sudo tee /etc/systemd/system/docker.service.d/docker.conf <<- 'EOF1'
+sudo tee /etc/systemd/system/docker.service.d/override.conf <<- 'EOF1'
 [Service]
 ExecStart=
-ExecStart=/usr/bin/docker daemon -H fd:// --insecure-registry=${ZETA_DOCKER_REG_URL}
+ExecStart=/usr/bin/docker daemon --storage-driver=overlay -H fd:// --insecure-registry=${ZETA_DOCKER_REG_URL}
 EOF1
 sudo systemctl daemon-reload
 sudo service docker restart
