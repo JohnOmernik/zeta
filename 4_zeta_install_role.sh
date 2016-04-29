@@ -4,7 +4,7 @@ CLUSTERNAME=$(ls /mapr)
 
 INST_FILE="/mapr/$CLUSTERNAME/user/zetaadm/cluster_inst/zeta_install_role.sh"
 
-. /mapr/${CLUSTERNAME}/user/zetaadm/cluster.conf
+. /mapr/${CLUSTERNAME}/user/zetaadm/cluster_inst/cluster.conf
 
 cat > $INST_FILE << EOALL
 #!/bin/bash
@@ -13,14 +13,14 @@ MESOS_ROLE=\$1
 MESOS_PRIN=\$2
 MESOS_PASS=\$3
 
-
 CLUSTERNAME=\$(ls /mapr)
+
+ZETA_ADM="/mapr/\$CLUSTERNAME/user/zetaadm/zetaadmin"
 
 if [ -d "/mapr/\${CLUSTERNAME}/mesos/kstore/\${MESOS_ROLE}" ]; then
     echo "Role \${MESOS_ROLE} already exists, will not install"
     exit 1
 fi
-
 
 # This is the ENV File for the cluster.
 ZETA_ENV_FILE="/mapr/\${CLUSTERNAME}/mesos/kstore/env/zeta_\${CLUSTERNAME}_\${MESOS_ROLE}.sh"
@@ -42,74 +42,9 @@ if [ "\$MESOS_PRIN" == "" ]; then
 fi
 
 USR="zetasvc\${MESOS_ROLE}data"
-echo "As part of this install, we will create a new user: \$USR so frameworks running in this role can be assigned a service user to access role specific data."
-echo ""
-stty -echo
-echo "Please enter the password for \$USR: "
-read SVCPASS1
-echo ""
-printf "Please renter password for \$USR: "
-read SVCPASS2
-echo ""
-stty echo
 
-while [ "\$SVCPASS1" != "\$SVCPASS2" ]
-do
-    echo "Passwords do not match"
-    stty -echo
-    echo "Please enter the password for \$USR: "
-    read SVCPASS1
-    echo ""
-    printf "Please renter password for \$USR: "
-    read SVCPASS2
-    echo ""
-    stty echo
-done
-
-
-
-
-
-# 2500 = zetaadm:zetaadm
-# 2501 + zeta based groups
-# 2600 = zeta users and their groups (for individuals) and service accounts
-# 3500 zeta role based groups
-GRPLIST="/mapr/\$CLUSTERNAME/mesos/kstore/zetasync/zetagroups.list"
-USRLIST="/mapr/\$CLUSTERNAME/mesos/kstore/zetasync/zetausers.list"
-echo "Getting Next User UID"
-Y=\$(cat \$USRLIST|grep -E "26[0-9][0-9]")
-if [ "\$Y" != "" ];then
-    echo "Zeta Users already exist"
-    TU=\$(cat \$USRLIST |grep -E "26[0-9][0-9]"|cut -d":" -f2|sort -r|head -1)
-    ZETA_UID=\$((\$TU + 1))
-else
-    ZETA_UID="2600"
-fi
-
-
-echo "Getting Next Group GID"
-T=\$(cat \$GRPLIST|grep -E "35[0-9][0-9]")
-if [ "\$T" != "" ];then
-    echo "Role Groups already exist, finding the next highest"
-    TP=\$(cat \$GRPLIST |grep -E "35[0-9][0-9]"|cut -d":" -f2|sort -r|head -1)
-    ZETA_GID=\$((\$TP + 1))
-else
-    ZETA_GID="3500"
-fi
-
-echo "Creating \$USR"
-USCRIPT="/mapr/${CLUSTERNAME}/tmp/rolecreate.sh"
-
-cat > \$USCRIPT << EOF99
-#!/bin/bash
-adduser --uid \$ZETA_UID \$USR
-echo "\$SVCPASS1"|passwd --stdin \$USR
-EOF99
-
-chmod +x \$USCRIPT
-/home/zetaadm/runcmd.sh "sudo \$USCRIPT"
-rm \$USCRIPT
-echo "\$USR:\$ZETA_UID" >> \$USRLIST
+echo "Adding User \$USR"
+\$ZETA_ADM/addzetauser.sh \$USR
 
 
 echo "Creating Role Base Directories"
@@ -120,16 +55,12 @@ do
     VOL="\${R}\${MESOS_ROLE}"
     MNT="/\${R}/\${MESOS_ROLE}"
     GRP="zeta\${MESOS_ROLE}\${R}"
-    /home/zetaadm/runcmd.sh "sudo groupadd --gid \$ZETA_GID \$GRP"
-    /home/zetaadm/runcmd.sh "sudo usermod -a -G \$GRP mapr"
-    /home/zetaadm/runcmd.sh "sudo usermod -a -G \$GRP zetaadm"
-    /home/zetaadm/runcmd.sh "sudo usermod -a -G \$GRP \$USR"
-    echo "\$GRP:\$ZETA_GID:mapr,zetaadm,\$USR" >> \$GRPLIST
+    \$ZETA_ADM/addzetagroup.sh \$GRP
+    \$ZETA_ADM/addtozetagroup.sh \$USR \$GRP
 
     sudo maprcli volume create -name \$VOL -path \$MNT -rootdirperms 775 -user zetaadm:fc,a,dump,restore,m,d
     sudo chmod 775 /mapr/\${CLUSTERNAME}\${MNT}
     sudo chown zetaadm:\$GRP /mapr/\${CLUSTERNAME}\${MNT}
-    ZETA_GID=\$((\$ZETA_GID + 1))
 done
 
 #########
@@ -198,6 +129,12 @@ fi
 cat > \$ZETA_ENV_FILE << EOL3
 #!/bin/bash
 CLUSTERNAME=\\\$(ls /mapr)
+
+if [ "\\\$CLUSTERNAME" == "" ]; then
+    CLUSTERNAME="$CLUSTERNAME"
+fi
+
+
 # Source Master Zeta ENV File
 . /mapr/\\\$CLUSTERNAME/mesos/kstore/env/master_env.sh
 # START GLOBAL ENV Variables for Zeta Environment

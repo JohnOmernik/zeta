@@ -1,0 +1,122 @@
+{
+    "zeta": {
+        "t": "<H2>Zeta information</H2><BR>Zeta is a platform to help you with many aspects of data analysis. I will work to help explain aspects of Zeta here",
+        "a": "None",
+        "core": {
+            "t": "",
+            "a": "None",
+            "MapR": {
+                "t": "",
+                "a": ""
+            },
+            "Mesos": {
+                "t": "",
+                "a": ""
+            },
+            "Docker": {
+                "t": "",
+                "a": ""
+            }
+        },
+        "filesystem": {
+            "t": "",
+            "a": "None",
+            "file locations": {
+                "t": "",
+                "a": "",
+                "apps": {
+                    "t": "",
+                    "a": ""
+                },
+                "data": {
+                    "t": "",
+                    "a": ""
+                },
+                "etl": {
+                    "t": "",
+                    "a": ""
+                },
+                "mesos": {
+                    "t": "",
+                    "a": ""
+                },
+                "user": {
+                    "t": "",
+                    "a": ""
+                }
+            }
+        },
+        "interfaces": {
+            "t": "",
+            "a": "None",
+            "jdbc": {
+                "t": "",
+                "a": "None"
+            },
+            "odbc": {
+                "t": "",
+                "a": "None"
+            },
+            "web": {
+                "t": "",
+                "a": "None"
+            }
+        },
+        "development": {
+            "t": "",
+            "a": "",
+            "env": {
+                "t": "",
+                "a": "None"
+            }
+        },
+        "datatools": {
+            "t": "",
+            "a": "None",
+            "spark":{
+                "t": "Apache Spark for batch and realtime programatic data manipulation",
+                "a": "None"
+            },
+            "kafka": {
+                "t": "Apache Kafka for messaging",
+                "a": "None"
+            },
+            "drill": {
+                "t": "Apache Drill for adhoc query",
+                "a": "None"
+            },
+            "hbase": {
+                "t": "hbase and Maprdb for realtime databases",
+                "a": "None"
+            },
+            "docker": {
+                "t": "docker and containerized code",
+                "a": "None"
+            }
+        },
+        "roles": {
+            "t": "",
+            "a": "None"
+        }
+    },
+    "datasets":{
+        "t":"Datasets and locations should be stored here",
+        "a":"None",
+        "dataset1":{
+            "t":"Data",
+            "a":"None",
+            "schema": {
+                "t": "Schema<BR>Some<BR>stuff",
+                "a": "None"
+            }
+        },
+        "dataset2":{
+            "t": "Data from another source",
+            "a": "None",
+            "schema": {
+                "t":"Schema info",
+                "a":"None"
+            }
+        }
+    }
+}

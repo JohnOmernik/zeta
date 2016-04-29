@@ -77,6 +77,7 @@ fi
 
 APP_ROOT="/mapr/${CLUSTERNAME}/${APP_DIR}/${MESOS_ROLE}/${APP}"
 APP_HOME="${APP_ROOT}/${APP_ID}"
+APP_PACKAGES="${APP_ROOT}/${APP}_packages"
 
 MARATHON_SUBMIT="/home/zetaadm/zetaadmin/marathon${MESOS_ROLE}_submit.sh"
 

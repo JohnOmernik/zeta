@@ -32,16 +32,33 @@ AGENT_LOG="/opt/mapr/mesos/tmp/slave_log/"
 
 echo "Starting Masters:"
 
-IPCOMMAND1="/sbin/ifconfig eth0|grep -o -P \"inet (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\"|cut -d\" \" -f2"
-IPCOMMAND2="/sbin/ifconfig eth1|grep -o -P \"inet (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\"|cut -d\" \" -f2"
-
+INTS="eth0 eth1 p4p1 p5p1 em1 em2"
 
 for MASTER in $ZETA_MESOS_MASTERS
 do
-    MASTERIP=`ssh $MASTER "$IPCOMMAND1" 2> /dev/null`
-    if [ "$MASTERIP" == "" ]; then
-        MASTERIP=`ssh $MASTER "$IPCOMMAND2" 2> /dev/null`
+
+
+    for X in $INTS;
+    do
+        CHECKCMD="/sbin/ifconfig $X 2> /dev/null|grep -o -P \"inet (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\"|cut -d\" \" -f2"
+        CHECK=`ssh $MASTER $CHECKCMD 2> /dev/null`
+        if [ "$CHECK" == "" ];then
+            CHECKCMD="/sbin/ifconfig $X 2> /dev/null|grep -o -P \"inet addr\:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\"|cut -d\" \" -f2"
+            CHECK=`ssh $MASTER $CHECKCMD 2> /dev/null`
+            CHECK=$(echo $CHECK|sed "s/addr://")
+        fi
+        if [ "$CHECK" != "" ]; then
+            break
+        fi
+    done
+    if [ "$CHECK" != "" ]; then
+        echo "Using IP $CHECK"
+        MASTERIP="$CHECK"
+    else
+        echo "Couldn't determine IP for master $MASTER exiting"
+        exit 1
     fi
+
     echo "Master: $MASTER on $MASTERIP:$MASTERPORT"
     echo ""
     CMD="hostname;$EXE_RUN mesos-master --ip=$MASTERIP --work_dir=$MASTER_WORK --log_dir=$MASTER_LOG --zk=$ZKSTR $MASTER_OPS"
@@ -61,11 +78,25 @@ echo "Putting Agents to Work"
 echo ""
 for AGENT in $ZETA_MESOS_AGENTS
 do
-
-    IP=`ssh $AGENT "$IPCOMMAND1" 2>/dev/null`
-
-    if [ "$IP" == "" ]; then
-        IP=`ssh $AGENT "$IPCOMMAND2" 2>/dev/null`
+  for X in $INTS;
+    do
+        CHECKCMD="/sbin/ifconfig $X 2> /dev/null|grep -o -P \"inet (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\"|cut -d\" \" -f2"
+        CHECK=`ssh $AGENT $CHECKCMD 2> /dev/null`
+        if [ "$CHECK" == "" ];then
+            CHECKCMD="/sbin/ifconfig $X 2> /dev/null|grep -o -P \"inet addr\:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\"|cut -d\" \" -f2"
+            CHECK=`ssh $AGENT $CHECKCMD 2> /dev/null`
+            CHECK=$(echo $CHECK|sed "s/addr://")
+        fi
+        if [ "$CHECK" != "" ]; then
+            break
+        fi
+    done
+    if [ "$CHECK" != "" ]; then
+        echo "Using IP $CHECK"
+        IP="$CHECK"
+    else
+        echo "Couldn't determine IP for agent $AGENT exiting"
+        exit 1
     fi
 
     echo "$AGENT on $IP"
@@ -95,4 +126,3 @@ do
 
 
 done
-

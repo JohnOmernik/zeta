@@ -177,6 +177,8 @@ cat > $SCRIPT << EOF
 #!/bin/env bash
 yum -y update && yum -y install openssl
 function validate_user() {
+    DIST_CHK=$(egrep -i -ho 'ubuntu|redhat|centos' /etc/*-release | awk '{print toupper($0)}' | sort -u)
+
     if ! id -u "\$1" >/dev/null 2>&1; then
         adduser --uid \$2 --gid \$3
     fi

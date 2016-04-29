@@ -53,8 +53,9 @@ if [ -d "${APP_ROOT}" ]; then
     echo "Installation will not continue over that, please rename or delete the existing directory to install fresh"
     exit 1
 fi
+APP_PACKAGES="${APP_ROOT}/${APP}_packages"
+
 
 echo "Making Directories for ${APP}"
-
 mkdir -p ${APP_ROOT}
-
+mkdir -p ${APP_PACKAGES}

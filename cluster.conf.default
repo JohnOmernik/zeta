@@ -27,9 +27,13 @@ PRVKEY="/Users/${USER}/.ssh/<value>.pem"
 
 #########################
 # This is the version of Mesos to download from Apache, build and install
-#MESOS_VER="0.27.2"
-#MESOS_RPM_ROOT="http://repos.mesosphere.com/el/7/x86_64/RPMS/"
-#MESOS_RPM="mesos-0.27.2-2.0.15.centos701406.x86_64.rpm"
+MESOS_VER="0.28.0"
+MESOS_DEB_ROOT="http://repos.mesosphere.com/ubuntu/pool/main/m/mesos/"
+MESOS_DEB_pre="mesos_0.28.0-2.0.16.ubuntu"
+MESOS_DEB_post="_amd64.deb"
+
+MESOS_RPM_ROOT="http://repos.mesosphere.com/el/7/x86_64/RPMS/"
+MESOS_RPM="mesos-0.28.0-2.0.16.centos701406.x86_64.rpm"
 
 #########################
 # I don't like putting passwords in file like this.

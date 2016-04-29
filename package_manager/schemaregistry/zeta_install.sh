@@ -1,49 +1,64 @@
 #!/bin/bash
 
-APP="schemaregistry"
+###########
+# Basic Variables
 
-re="^[a-z0-9]+$"
-if [[ ! "${APP}" =~ $re ]]; then
-    echo "App name can only be lowercase letters and numbers"
-    exit 1
-fi
+CLUSTERNAME=$(ls /mapr) # Get your cluster name
 
-read -e -p "Please enter the Mesos Role you wish to install ${APP} to: " -i "prod" MESOS_ROLE
+APP="schemaregistry" # You do want to set this here so change this variable
 
-CLUSTERNAME=$(ls /mapr)
+APP_DIR="mesos"  # Most things fall into mesos. This is a suggestion, it will still prompt the user 
 
+
+
+###########
+# Load the install include file
+. /mapr/${CLUSTERNAME}/mesos/kstore/zeta_inc/zetaincludes/inc_zeta_install.sh
+
+###########
+# CD to the temp location where this script is run from 
 cd "$(dirname "$0")"
 
-. /mapr/$CLUSTERNAME/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
-
-
-APP_ROOT="/mapr/$CLUSTERNAME/mesos/$MESOS_ROLE/${APP}"
-
-if [ -d "${APP_ROOT}" ]; then
-    echo "The Installation Directory already exists at ${APP_ROOT}"
-    echo "Installation will not continue over that, please rename or delete the existing directory to install fresh"
+if [ ! -d "/mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/confluentbase" ]; then
+    echo "confluentbase is required for ${APP}"
+    echo "exiting"
+    rm -rf ${APP_ROOT}
     exit 1
 fi
 
-if [ ! -d "/mapr/$CLUSTERNAME/mesos/$MESOS_ROLE/confluentbase" ]; then
-    echo "Cannot install ${APP} without confluent base package"
-    echo "Please install confluent_base first"
-    echo "Exiting"
+if [ ! -d "/mapr/${CLUSTERNAME}/mesos/${MESOS_ROLE}/kafka" ]; then
+    echo "kafka is required for ${APP}"
+    echo "exiting"
+    rm -rf ${APP_ROOT}
     exit 1
 fi
 
-echo "Making Directory for ${APP}"
-mkdir -p ${APP_ROOT}
-echo ""
-echo "Copying Files for ${APP}"
-cp -R ./conf ${APP_ROOT}/
-cp install_instance.sh ${APP_ROOT}/
-cp start_instance.sh ${APP_ROOT}/
+
+###########
+# Copy files to their proper locations:. ${APP_ROOT} is set in the includes
+mkdir -p ${APP_ROOT}/${APP}_packages
+cp -R ./conf ${APP_ROOT}/${APP}_packages/
+
+cp ./install_instance.sh ${APP_ROOT}/
+cp ./start_instance.sh ${APP_ROOT}/
+
+###########
+# Only make executable the next steps. 
 chmod +x ${APP_ROOT}/install_instance.sh
+
+###########
+# Provide instructions you can/change this per install. 
 echo ""
-echo "${APP} Base Installed"
-echo "To install an individual ${APP} instance run:"
+echo ""
+echo "${APP} installed to role ${MESOS_ROLE} at ${APP_ROOT}"
+echo ""
+echo "Now you can install individual instances by running:"
 echo ""
 echo "> ${APP_ROOT}/install_instance.sh"
 echo ""
+echo ""
+
+
+
+
 

@@ -13,7 +13,7 @@ fi
 # Change to the root dir
 cd "$(dirname "$0")"
 
-. ./cluster.conf
+. /mapr/$CLUSTERNAME/user/zetaadm/cluster_inst/cluster.conf
 
 # Get the Zookeepers from the warden.conf file
 ZK_SPEC=$(cat /opt/mapr/conf/warden.conf|grep zookeeper\.servers|sed "s/zookeeper\.servers=//g")
@@ -177,7 +177,8 @@ zetausers:2501:mapr,zetaadm
 GRPEOF
 
 cat > ${DIR}/zetausers.list << USROF
-zetaadm:2500
+mapr:$(id -u mapr)
+zetaadm:$(id -u zetaadm)
 USROF
 
 
@@ -259,7 +260,7 @@ echo "Removing install package and setting scripts to executable"
 rm zeta_inst_zetaadmin.tgz
 chmod +x ./zetaadmin/*
 chmod +x /mapr/$CLUSTERNAME/user/zetaadm/zetaadmin/*
-
+cp /mapr/$CLUSTERNAME/user/zetaadm/zetaadmin/dockersync.sh /mapr/$CLUSTERNAME/mesos/kstore/zetasync/
 
 
 echo "Main Layout for Zeta installed"

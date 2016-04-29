@@ -1,61 +1,27 @@
 #!/bin/bash
+
 CLUSTERNAME=$(ls /mapr)
 
-ROLE_GUESS=$(echo "$(realpath "$0")"|cut -d"/" -f5)
-
-APP_ID_GUESS=$(basename $(dirname `realpath "$0"`))
-
 APP="schemaregistry"
-re="^[a-z0-9]+$"
-if [[ ! "${APP}" =~ $re ]]; then
-    echo "App name can only be lowercase letters and numbers"
-    exit 1
-fi
 
-read -e -p "We autodetected the Mesos Role as ${ROLE_GUESS}. Please enter the Mesos role to use for this instance install: " -i $ROLE_GUESS MESOS_ROLE
-
-read -e -p "We autodetected the instance for ${APP} startup to be ${APP_ID_GUESS}. Please enter the instance name for ${APP} startup: " -i ${APP_ID_GUESS} APP_ID
-
-if [[ ! "${APP_ID}" =~ $re ]]; then
-    echo "App name can only be lowercase letters and numbers"
-    exit 1
-fi
-
-APP_ROOT="/mapr/$CLUSTERNAME/mesos/${MESOS_ROLE}/${APP}"
-APP_HOME="${APP_ROOT}/${APP_ID}"
-
-APP_ID_ENV=$(echo ${APP_ID}|tr "-" "_")
+. /mapr/${CLUSTERNAME}/mesos/kstore/zeta_inc/zetaincludes/inc_general.sh
 
 
-MARATHON_SUBMIT="/home/zetaadm/zetaadmin/marathon${MESOS_ROLE}_submit.sh"
+${MARATHON_SUBMIT} ${APP_HOME}/${APP_ID}.marathon
 
-. /mapr/$CLUSTERNAME/mesos/kstore/env/zeta_${CLUSTERNAME}_${MESOS_ROLE}.sh
+### Consider getting some variables to help the user
+THOST="ZETA_${APP_UP}_${APP_ID}_HOST"
+TPORT="ZETA_${APP_UP}_${APP_ID}_PORT"
 
-if [ ! -d "${APP_HOME}" ]; then
-    echo "${APP_HOME} does not exist. Are you sure your ${APP} instance ${APP_ID} is installed properly?"
-    exit 1
-fi
-
-cd ${APP_HOME}
-
-$MARATHON_SUBMIT ${APP_ID}.marathon
-
-TWEB="ZETA_SCHEMAREGISTRY_${APP_ID_ENV}_HOST"
-TPORT="ZETA_SCHEMAREGISTRY_${APP_ID_ENV}_PORT"
-eval RWEB=\$$TWEB
+eval RHOST=\$$THOST
 eval RPORT=\$$TPORT
 
 echo ""
 echo ""
-echo "Your ${APP} Instance is running:"
-echo "The Schema Registry lives here: http://${RWEB}:${RPORT}"
+echo "$APP, installed to ${APP_HOME}, has been started via Marathon"
+echo ""
+echo "It can be found here:"
+echo "http://${RHOST}:${RPORT}"
 echo ""
 echo ""
-
-
-
-
-
-
-
 
