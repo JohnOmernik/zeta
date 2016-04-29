@@ -3,6 +3,7 @@
 # Specific working directories
 archive/
 zetafun/
+tmp/
 
 # Try to protect (mainly myself) but others from including credential info
 *.pem

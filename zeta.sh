@@ -75,6 +75,8 @@ if [[ -f $DIR/$CONFIG_FL &&  -r $DIR/$CONFIG_FL ]]; then
     ZETAADM_GID=${ZETAADM_GID:-2500}
     ZETAADM_USER=${ZETAADM_USERS:-zetaadm}
     ZETAADM_GROUP=${ZETAADM_GROUP:-zetaadm}
+    ZETAUSERS_GROUP=${ZETAUSERS_GROUP:-zetausers}
+    ZETAUSERS_GID=${ZETAUSERS_GID:-2501}
 
     # Make sure the UIDs are not the same for users
     if [[ $ZETAADDM_UID == $MAPR_UID ]]; then err "User UIDs are the same!" && exit 1; fi
@@ -170,24 +172,45 @@ echo "ZETAADM_PASS_ENCRYPT=\"${ZETAADM_PASS_ENCRYPT}\"" >> $DEFAULT_OUTCONF
 ZETAADM_PASS1=;ZETAADM_PASS2=; # Paranoid
 
 info "Make user sync program to be run on all nodes"
-SCRIPT="${DIR}/tmp/make_user.sh"
+SCRIPT="${DIR}/tmp/sync_users.sh"
 cat > $SCRIPT << EOF
 #!/bin/env bash
-yum -y update
-if ! id -u "${ZETAADM_USER}" >/dev/null 2>&1; then
-    adduser --uid ${ZETAADM_UID} --gid ${ZETAADM_GID}
-fi
-# Make sure the UID # matches
-if [[ \`id -u ${ZETAADM_USER}\` != ${ZETAADM_UID} ]]; then
-    usermod -u ${ZETAADM_UID} ${ZETAADM_USER}
-fi
+yum -y update && yum -y install openssl
+function validate_user() {
+    if ! id -u "\$1" >/dev/null 2>&1; then
+        adduser --uid \$2 --gid \$3
+    fi
 
-if [[ \`id -g ${ZETAADM_USER}\` != ${ZETAADM_GID}]]; then
-    usermod -g ${ZETAADM_GID} ${ZETAADM_USER}
-fi
+    # UID match
+    if [[ \`id -u \$1\` != \$2 ]]; then
+        usermod -u \$2 \$1
+    fi
+     # GID match
+    if [[ \`id -g \$1\` != \$3]]; then
+        usermod -g \$3 \$1
+    fi
 
-MAPR_PASS=\`echo "${MAPR_PASS_ENCRYPT}" | base64 -D | openssl rsautl -decrypt -inkey /home/${IUSER}/.ssh/id_rsa\`
-ZETAADM_PASS=\`echo "${ZETAADM_PASS_ENCRYPT}" | base64 -D | openssl rsautl -decrypt -inkey /home/${IUSER}/.ssh/id_rsa
+    # Sudoer?
+    if sudo -l -U \$1 | grep -i 'allowed' >/dev/null 2>&1; then
+        echo "\$1 ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+    fi
+
+    # zetausers check
+    if  getent group "${ZETAUSERS_GROUP}" >/dev/null 2>&1; then
+        groupadd --gid ${ZETAUSERS_GID} ${ZETAUSERS_GROUP}
+    fi
+
+    # Add to zetausers
+    if ! groups \$1 | grep &>/dev/null '\b${ZETAUSERS_GROUP}\b'; then
+        usermod -a -G ${ZETAUSERS_GROUP} \$1
+    fi
+}
+
+ # Validate user and set passwords accordingly
+validate_user ${MAPR_USER} ${MAPR_UID} ${MAPR_GID}
+validate_user ${ZETAADM_USER} ${ZETAADM_UID} ${ZETAADM_GID}
+MAPR_PASS=\`echo "${MAPR_PASS_ENCRYPT}" | base64 -d | openssl rsautl -decrypt -inkey /home/${IUSER}/.ssh/id_rsa\`
+ZETAADM_PASS=\`echo "${ZETAADM_PASS_ENCRYPT}" | base64 -d | openssl rsautl -decrypt -inkey /home/${IUSER}/.ssh/id_rsa
 echo \`\$MAPR_PASS\` | passwd --stdin ${MAPR_USER}
 echo \`\$ZETAADM_PASS\` | passwd --stdin ${ZETAADM_USER}
 EOF
