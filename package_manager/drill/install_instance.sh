@@ -52,7 +52,9 @@ echo ""
 mkdir -p ${APP_HOME}
 mkdir -p ${APP_HOME}/log
 mkdir -p ${APP_HOME}/conf.std
-
+mkdir -p ${APP_HOME}/log/sqlline
+sudo chown mapr:mapr /mapr/brewpot/mesos/prod/drill/drillprod/log/sqlline
+sudo chmod 777 ${APP_HOME}/log/sqlline
 cp ${APP_ROOT}/start_instance.sh ${APP_HOME}/
 chmod +x ${APP_HOME}/start_instance.sh
 
@@ -145,6 +147,12 @@ SPILLLOC="/var/mapr/local/\${HOSTNAME}/drillspill"
 o=\$(echo \$CALL_SCRIPT|grep sqlline)
 if [ "\$o" != "" ]; then
     echo "SQL Line: no SPILL Loc"
+    export DRILL_LOG_DIR="\${DRILL_LOG_DIR}/sqlline/\$(whoami)"
+    echo "Log Dir: \$DRILL_LOG_DIR"
+    if [ ! -d "\${DRILL_LOG_DIR}" ]; then
+        mkdir -p \${DRILL_LOG_DIR}
+        chmod 750 \${DRILL_LOG_DIR}
+    fi
 else
     export DRILL_SPILLLOC="\$SPILLLOC/\${APP_ID}"
 
